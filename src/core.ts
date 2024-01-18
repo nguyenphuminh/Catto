@@ -1,4 +1,4 @@
-import { Chess, Move } from "chess.js";
+import { Chess, Color, Move } from "chess.js";
 import { evaluateBoard } from "./evaluate.js";
 import { mvv_lva, PIECE_NUM } from "./evaluations.js";
 
@@ -151,8 +151,6 @@ export class Engine {
                 // Ply is added because:
                 // - In our checkmate, we would want the furthest path to checkmate
                 // - In their checkmate, we would want the shortest path to checkmate
-                
-                // The equation above also turns out to work well with negamax
             }
 
             return 0; // Stalemate
@@ -169,9 +167,9 @@ export class Engine {
             this.prevMove = move;
 
             // Make move
+            this.ply++;
             this.chess.move(move);
             const score = -this.negamax(depth - 1, -beta, -alpha);
-            this.ply++;
 
             // Take back move
             this.chess.undo();
