@@ -41,6 +41,7 @@ node .
 * Quiescence search.
 * Evalution:
 	* PeSTO evaluation.
+	* Pawn structure.
 
 
 ### Others

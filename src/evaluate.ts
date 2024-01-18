@@ -1,4 +1,4 @@
-import { Chess } from "chess.js";
+import { Chess, PieceSymbol } from "chess.js";
 import { mgTable, egTable, gamephaseInc, PIECE_NUM, mgMaterial, egMaterial } from "./evaluations.js";
 
 function pcolor(side: string) { 
@@ -9,7 +9,12 @@ export function evaluateBoard(chessObj: Chess) {
     const board = chessObj.board();
     const side = chessObj.turn();
 
-    const mg = [ 0, 0 ], eg = [ 0, 0 ];
+    const mg = [ 0, 0 ]
+        , eg = [ 0, 0 ]
+        , file = [ 
+            [ 0, 0, 0, 0, 0, 0, 0, 0 ],
+            [ 0, 0, 0, 0, 0, 0, 0, 0 ]
+        ];
 
     let gamePhase = 0;
 
@@ -30,10 +35,25 @@ export function evaluateBoard(chessObj: Chess) {
 
             // Guess game phase based on material
             gamePhase += gamephaseInc[PIECE_NUM[board[x][y]!.type]];
+
+            // Count pawns in a file
+            if (board[x][y]!.type === "p") {
+                file[pcolor(board[x][y]!.color)][y] += 1;
+            }
         }
     }
 
-    // Tapared eval
+    // Pawn structure eval
+    let pawnDeficit = 0;
+
+    for (let index = 0; index < 8; index++) {
+        // Pawn deficit of us
+        pawnDeficit -= file[pcolor(side)][index] >= 1 ? (file[pcolor(side)][index] - 1) * 20 : 0;
+        // Pawn deficit of the opponent
+        pawnDeficit += file[pcolor(side) ^ 1][index] >= 1 ? (file[pcolor(side) ^ 1][index] - 1) * 20 : 0;
+    }
+
+    // Tapered eval
     let mgScore = mg[pcolor(side)] - mg[pcolor(side) ^ 1];
     let egScore = eg[pcolor(side)] - eg[pcolor(side) ^ 1];
 
@@ -45,5 +65,5 @@ export function evaluateBoard(chessObj: Chess) {
 
     // console.log(chessObj.ascii(), (mgScore * mgPhase + egScore * egPhase) / 24);
     
-    return (mgScore * mgPhase + egScore * egPhase) / 24;
+    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit;
 }
