@@ -1,18 +1,7 @@
-import { Engine } from "./dist/core.js";
-import readline from "readline";
 import config from "./catto.config.js";
+import { UCI } from "./dist/uci.js";
 
-const io = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+const uci = new UCI(config);
 
-io.question("Enter FEN value: ", fen => {
-    const engine = new Engine({ ...config, fen });
+uci.start();
 
-    console.log("Move:\n", engine.findMove());
-
-    console.log("Searched nodes:", engine.nodes);
-    
-    io.close();
-});

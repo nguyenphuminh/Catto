@@ -6,6 +6,8 @@ export interface EngineOptions {
     fen: string;
     debug: boolean;
     searchDepth: number;
+    uci: boolean;
+    version: string;
 }
 
 export interface HistoryMove {
@@ -22,6 +24,7 @@ export class Engine {
     public ply: number = 0;
     public prevMove?: Move;
     public bestMove?: Move;
+    public uci: boolean = false;
     // Used for killer move heuristic
     public killerMove = [ new Array(64).fill(null), new Array(64).fill(null) ];
     // Used for counter move heuristic
@@ -35,8 +38,9 @@ export class Engine {
     constructor(options: EngineOptions) {
         this.fen = options.fen;
         this.debug = options.debug;
-        this.searchDepth = options.searchDepth;
+        this.searchDepth = options.searchDepth - 1;
         this.chess = new Chess(this.fen);
+        this.uci = options.uci;
     }
 
     getMovePrio(move: Move): number {

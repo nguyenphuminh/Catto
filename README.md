@@ -42,6 +42,7 @@ node .
 * Evalution:
 	* PeSTO evaluation.
 	* Pawn structure.
+* UCI (not tested in GUIs).
 
 
 ### Others
