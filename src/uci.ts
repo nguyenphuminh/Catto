@@ -78,14 +78,17 @@ export class UCI {
         }
 
         // Load moves
-        const moves = command.split("moves ")[1];
+        const movesString = command.split("moves ")[1];
+        
+        if (movesString) {
+            const moves = command.split("moves ")[1].split(" ").filter(move => move.length !== 0);
     
-        if (moves) {
-            for (const move of moves) {
-                this.engine.chess.move(move);
+            if (moves) {
+                for (const move of moves) {
+                    this.engine.chess.move(move);
+                }
             }
         }
-
         // console.log(this.engine.chess.ascii());
     }
 
