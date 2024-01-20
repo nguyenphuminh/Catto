@@ -1,5 +1,5 @@
-import config from "./catto.config.js";
-import { UCI } from "./dist/uci.js";
+const config = require("./catto.config");
+const { UCI } = require("./dist/uci");
 
 const uci = new UCI(config);
 

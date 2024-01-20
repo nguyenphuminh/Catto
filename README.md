@@ -27,6 +27,13 @@ npx tsc
 node .
 ```
 
+## Build into executable
+
+In your console, type:
+```
+npm run build
+```
+
 ## What do we currently have?
 
 ### The engine

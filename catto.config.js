@@ -1,4 +1,4 @@
-export default {
+module.exports = {
     searchDepth: 4,
     debug: true,
     uci: true,

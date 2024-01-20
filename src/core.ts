@@ -1,6 +1,6 @@
 import { Chess, Color, Move } from "chess.js";
-import { evaluateBoard } from "./evaluate.js";
-import { mvv_lva, PIECE_NUM } from "./evaluations.js";
+import { evaluateBoard } from "./evaluate";
+import { mvv_lva, PIECE_NUM } from "./evaluations";
 
 export interface EngineOptions {
     fen: string;

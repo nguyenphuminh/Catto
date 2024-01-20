@@ -1,5 +1,5 @@
 import { Chess, PieceSymbol } from "chess.js";
-import { mgTable, egTable, gamephaseInc, PIECE_NUM, mgMaterial, egMaterial } from "./evaluations.js";
+import { mgTable, egTable, gamephaseInc, PIECE_NUM, mgMaterial, egMaterial } from "./evaluations";
 
 function pcolor(side: string) { 
     return side === "w" ? 0 : 1;

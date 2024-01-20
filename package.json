@@ -4,9 +4,9 @@
   "description": "A new chess engine",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pkg index.js -o catto"
   },
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nguyenphuminh/Catto.git"
@@ -22,10 +22,11 @@
   },
   "homepage": "https://github.com/nguyenphuminh/Catto#readme",
   "dependencies": {
-    "chess.js": "^1.0.0-beta.7",
-    "typescript": "^5.3.3"
+    "chess.js": "^1.0.0-beta.7"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5"
+    "@types/node": "^20.11.5",
+    "pkg": "^5.8.1",
+    "typescript": "^5.3.3"
   }
 }
