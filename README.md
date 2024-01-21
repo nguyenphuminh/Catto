@@ -34,6 +34,26 @@ In your console, type:
 npm run build
 ```
 
+## Configure
+
+There are several configurations for Catto that you can change in `catto.config.js` if you want:
+
+```js
+module.exports = {
+    // Search depth
+    searchDepth: 4,
+    // Set to true to turn on debug mode, but currently this does nothing
+    debug: true,
+    // Leave true if you want UCI enabled, otherwise it will ask for a FEN string and log out the best position
+    uci: true,
+    // The starting position represented as a FEN string
+    fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    // Current version to show in UCI
+    version: "v0.1.0"
+}
+```
+
+
 ## What do we currently have?
 
 ### The engine
@@ -49,12 +69,7 @@ npm run build
 * Evalution:
 	* PeSTO evaluation.
 	* Pawn structure.
-* UCI (not tested in GUIs).
-
-
-### Others
-
-* A simple and not-that-intuitive console application that takes a FEN value and returns a move.
+* UCI.
 
 
 ## This looks familiar...
