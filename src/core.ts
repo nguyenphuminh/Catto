@@ -142,6 +142,9 @@ export class Engine {
     negamax(depth: number, alpha: number, beta: number): number {        
         this.nodes++;
 
+        // Detecting 3-fold repetition
+        if (this.ply && this.chess.isThreefoldRepetition()) return 0;
+
         if (depth === 0) return this.quiescence(alpha, beta);
 
         // Get next moves
@@ -162,8 +165,6 @@ export class Engine {
 
         // Sort moves
         possibleMoves = this.sortMoves(possibleMoves);
-
-        let bestMoveSoFar: Move, oldAlpha = alpha;
 
         // Find the best move
         for (const move of possibleMoves) {
@@ -206,14 +207,9 @@ export class Engine {
 
                 // Store best move if it's root
                 if (this.ply === 0) {
-                    bestMoveSoFar = move;
+                    this.bestMove = move;
                 }
             }
-        }
-
-        // Found better move
-        if (oldAlpha !== alpha) {
-            this.bestMove = bestMoveSoFar!;
         }
 
         // Node fails low
