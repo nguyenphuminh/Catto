@@ -147,6 +147,32 @@ export class Engine {
 
         if (depth === 0) return this.quiescence(alpha, beta);
 
+        // Null move pruning
+        if (this.ply && depth >= 3 && !this.chess.inCheck()) {
+            // Preserve old moves to reconstruct chess obj
+            const oldMoves = this.chess.history();
+
+            // Make null move
+            let tokens = this.chess.fen().split(" ");
+            tokens[1] = this.chess.turn() === "w" ? "b" : "w";
+            tokens[3] = '-' // reset the en passant square
+            this.chess.load(tokens.join(" "));
+
+            // Search with reduced depth
+            const score = -this.negamax(depth - 1 - 2, -beta, -beta + 1);
+
+            // Reconstruct chess obj prior to null move
+            this.chess.load(this.fen);
+            for (const oldMove of oldMoves) {
+                this.chess.move(oldMove);
+            }
+
+            // Fail-hard beta cutoff
+            if (score >= beta) {
+                return beta;
+            }
+        }
+
         // Get next moves
         let possibleMoves = this.chess.moves({ verbose: true });
 
@@ -218,6 +244,8 @@ export class Engine {
 
     findMove() {
         this.negamax(this.searchDepth, -50000, 50000);
+
+        // console.log("Nodes searched:", this.nodes);
 
         return this.bestMove;
     }

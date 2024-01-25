@@ -64,6 +64,7 @@ module.exports = {
 	* Killer heuristic.
 	* History heuristic.
 	* Countermove heuristic.
+* Null-move pruning.
 * Checkmate and stalemate detection.
 * Quiescence search.
 * Evalution:
