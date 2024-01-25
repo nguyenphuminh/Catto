@@ -72,6 +72,11 @@ module.exports = {
 * UCI.
 
 
+## Todos
+
+See todos for Catto [here](https://github.com/users/nguyenphuminh/projects/2).
+
+
 ## This looks familiar...
 
 This used to be the Meow chess engine but I have decided to rebuilt it from the ground up because the old codebase is too messy and I lost track of what I was doing. Catto is written in Typescript and is designed to be more modular.
