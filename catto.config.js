@@ -3,5 +3,5 @@ module.exports = {
     debug: true,
     uci: true,
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    version: "v0.2.0"
+    version: "v0.3.0"
 }

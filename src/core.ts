@@ -1,6 +1,19 @@
 import { Chess, Color, Move } from "chess.js";
 import { evaluateBoard } from "./evaluate";
 import { mvv_lva, PIECE_NUM } from "./evaluations";
+import { genZobristKey } from "./zobrist";
+
+export enum HashFlag {
+    exact,
+    alpha,
+    beta
+}
+
+export interface HashEntry {
+    score: number;
+    hashFlag: HashFlag,
+    depth: number;
+}
 
 export interface EngineOptions {
     fen: string;
@@ -43,6 +56,46 @@ export class Engine {
         this.uci = options.uci;
     }
 
+    // Tranposition table
+    public hashTable: Record<string, HashEntry> = {};
+
+    recordHash(score: number, depth: number, hashFlag: HashFlag) {
+        const hash = genZobristKey(this.chess).toString();
+        
+        this.hashTable[hash] = {
+            score,
+            depth,
+            hashFlag
+        }
+    }
+
+    probeHash(alpha: number, beta: number, depth: number): number {
+        const hash = genZobristKey(this.chess).toString();
+
+        const hashEntry = this.hashTable[hash];
+
+        if (!hashEntry)
+            // If position does not exist the transposition table
+            return 99999;
+        
+        if (depth >= hashEntry.depth) {
+            let score = hashEntry.score;
+
+            if (score < -48000) score += this.ply;
+            if (score > 48000) score -= this.ply;
+
+            if (hashEntry.hashFlag === HashFlag.exact)
+                return score;
+            if (hashEntry.hashFlag === HashFlag.alpha && score <= alpha)
+                return alpha;
+            if (hashEntry.hashFlag === HashFlag.beta && score >= beta)
+                return beta;
+        }
+
+        return 99999;
+    }
+
+    // Move ordering
     getMovePrio(move: Move): number {
         // Killer heuristic and history heuristic
         
@@ -139,12 +192,21 @@ export class Engine {
         return alpha;
     }
 
-    negamax(depth: number, alpha: number, beta: number): number {        
+    negamax(depth: number, alpha: number, beta: number): number {
         this.nodes++;
+
+        let hashFlag = HashFlag.alpha;
 
         // Detecting 3-fold repetition
         if (this.ply && this.chess.isThreefoldRepetition()) return 0;
 
+        // Check if position exists in transposition table
+        let score = this.probeHash(alpha, beta, depth);
+
+        if (this.ply && score !== 99999)
+            return score;
+
+        // Quiescence search
         if (depth === 0) return this.quiescence(alpha, beta);
 
         // Null move pruning
@@ -208,6 +270,9 @@ export class Engine {
 
             // Fail-hard beta cutoff
             if (score >= beta) {
+                // Store move in the case of a fail-hard beta cutoff
+                this.recordHash(beta, depth, HashFlag.beta);
+
                 if (!move.captured) { // Only quiet moves
                     // Store killer moves
                     
@@ -224,6 +289,8 @@ export class Engine {
 
             // Found better move
             if (score > alpha) {
+                hashFlag = HashFlag.exact;
+
                 // Store history moves
                 if (!move.captured) { // Only quiet moves
                     this.historyMove[move.color][PIECE_NUM[move.piece]][move.to] += depth;
@@ -237,6 +304,8 @@ export class Engine {
                 }
             }
         }
+
+        this.recordHash(alpha, depth, hashFlag);
 
         // Node fails low
         return alpha;
