@@ -18,7 +18,10 @@ export interface HashEntry {
 export interface EngineOptions {
     fen: string;
     debug: boolean;
+    stable: boolean;
     searchDepth: number;
+    lmrFullDepth: number;
+    lmrMaxReduction: number;
     uci: boolean;
     version: string;
 }
@@ -32,8 +35,12 @@ export class Engine {
     public chess: Chess;
     public fen: string;
     public debug: boolean;
+    public stable: boolean;
     public searchDepth: number;
-    public nodes: number = 0; // Searched nodes, used for debugging
+    public nodes: number = 0;
+    public searchedMoves: number = 0;
+    public lmrMaxReduction: number;
+    public lmrFullDepth: number;
     public ply: number = 0;
     public prevMove?: Move;
     public bestMove?: Move;
@@ -51,15 +58,20 @@ export class Engine {
     constructor(options: EngineOptions) {
         this.fen = options.fen;
         this.debug = options.debug;
-        this.searchDepth = options.searchDepth - 1;
+        this.searchDepth = options.searchDepth;
         this.chess = new Chess(this.fen);
         this.uci = options.uci;
+        this.stable = options.stable;
+        this.lmrMaxReduction = options.lmrMaxReduction;
+        this.lmrFullDepth = options.lmrFullDepth;
     }
 
     // Tranposition table
     public hashTable: Record<string, HashEntry> = {};
 
     recordHash(score: number, depth: number, hashFlag: HashFlag) {
+        if (this.stable) return;
+
         const hash = genZobristKey(this.chess).toString();
         
         this.hashTable[hash] = {
@@ -98,7 +110,6 @@ export class Engine {
     // Move ordering
     getMovePrio(move: Move): number {
         // Killer heuristic and history heuristic
-        
         let priority = 0;
     
         // Non-capture moves
@@ -198,7 +209,10 @@ export class Engine {
         let hashFlag = HashFlag.alpha;
 
         // Detecting 3-fold repetition
-        if (this.ply && this.chess.isThreefoldRepetition()) return 0;
+        if (this.ply && this.chess.isThreefoldRepetition()) {
+            this.recordHash(0, depth, HashFlag.exact);
+            return 0;
+        }
 
         // Check if position exists in transposition table
         let score = this.probeHash(alpha, beta, depth);
@@ -262,7 +276,26 @@ export class Engine {
             // Make move
             this.ply++;
             this.chess.move(move);
-            const score = -this.negamax(depth - 1, -beta, -alpha);
+            let score = 0;
+
+            // Late move reduction
+            if (this.searchedMoves === 0) {
+                score = -this.negamax(depth-1, -beta, -alpha);
+            } else {
+                if (
+                    this.searchedMoves >= this.lmrFullDepth && 
+                    depth >= this.lmrMaxReduction && 
+                    !this.chess.inCheck() &&
+                    !move.captured &&
+                    !move.promotion
+                ) {
+                    score = -this.negamax(depth-2, -beta, -alpha);
+                } else {
+                    score = -this.negamax(depth-1, -beta, -alpha); 
+                }
+            }
+
+            this.searchedMoves++;
 
             // Take back move
             this.chess.undo();
@@ -314,7 +347,7 @@ export class Engine {
     findMove() {
         this.negamax(this.searchDepth, -50000, 50000);
 
-        // console.log("Nodes searched:", this.nodes);
+        if (this.debug) console.log("Nodes searched:", this.nodes);
 
         return this.bestMove;
     }

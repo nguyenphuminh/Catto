@@ -41,15 +41,20 @@ There are several configurations for Catto that you can change in `catto.config.
 ```js
 module.exports = {
     // Search depth
-    searchDepth: 4,
-    // Set to true to turn on debug mode, but currently this does nothing
+    searchDepth: 5,
+    // Set to true to turn on debug mode, will log out useful info
     debug: true,
+    // If you disable stable mode, features that are in-dev and might cause issues will be turned on
+    stable: true,
     // Leave true if you want UCI enabled, otherwise it will ask for a FEN string and log out the best position
     uci: true,
     // The starting position represented as a FEN string
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     // Current version to show in UCI
-    version: "v0.1.0"
+    version: "v0.4.0",
+    // Late move reduction config
+    lmrFullDepth: 4, // Number of moves to be searched in full depth
+    lmrMaxReduction: 3 // Only apply LMR above this depth
 }
 ```
 
@@ -64,7 +69,7 @@ module.exports = {
 	* Killer heuristic.
 	* History heuristic.
 	* Countermove heuristic.
-* Transposition table.
+* Transposition table (disabled).
 * Null-move pruning.
 * Checkmate and stalemate detection.
 * Quiescence search.
