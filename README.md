@@ -71,6 +71,7 @@ module.exports = {
 	* Countermove heuristic.
 * Transposition table (disabled).
 * Null-move pruning.
+* Late move reductions.
 * Checkmate and stalemate detection.
 * Quiescence search.
 * Evalution:
