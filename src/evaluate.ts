@@ -5,7 +5,7 @@ function pcolor(side: string) {
     return side === "w" ? 0 : 1;
 }
 
-export function evaluateBoard(chessObj: Chess) {
+export function evaluateBoard(chessObj: Chess, debug = false) {
     const board = chessObj.board();
     const side = chessObj.turn();
 
@@ -47,10 +47,64 @@ export function evaluateBoard(chessObj: Chess) {
     let pawnDeficit = 0;
 
     for (let index = 0; index < 8; index++) {
-        // Pawn deficit of us
+        // Doubled pawns of us
         pawnDeficit -= file[pcolor(side)][index] >= 1 ? (file[pcolor(side)][index] - 1) * 20 : 0;
-        // Pawn deficit of the opponent
+        // Doubled pawns of the opponent
         pawnDeficit += file[pcolor(side) ^ 1][index] >= 1 ? (file[pcolor(side) ^ 1][index] - 1) * 20 : 0;
+    
+        let isolatedPawnScore = 0;
+
+        // Isolated pawns of us
+        if (file[pcolor(side)][index] >= 1) {
+            if (
+                // If pawn is from b to g file
+                (
+                    index > 0 && 
+                    index < 7 &&
+                    file[pcolor(side)][index - 1] === 0 &&
+                    file[pcolor(side)][index + 1] === 0
+                ) ||
+                // If pawn is from a file
+                (
+                    index === 0 &&
+                    file[pcolor(side)][index + 1] === 0
+                ) ||
+                // If pawn is from h file
+                (
+                    index === 7 &&
+                    file[pcolor(side)][index - 1] === 0
+                )
+            ) {
+                isolatedPawnScore -= 10;
+            }
+        }
+
+        // Isolated pawns of the opponent
+        if (file[pcolor(side) ^ 1][index] >= 1) {
+            if (
+                // If pawn is from b to g file
+                (
+                    index > 0 && 
+                    index < 7 &&
+                    file[pcolor(side) ^ 1][index - 1] === 0 &&
+                    file[pcolor(side) ^ 1][index + 1] === 0
+                ) ||
+                // If pawn is from a file
+                (
+                    index === 0 &&
+                    file[pcolor(side) ^ 1][index + 1] === 0
+                ) ||
+                // If pawn is from h file
+                (
+                    index === 7 &&
+                    file[pcolor(side) ^ 1][index - 1] === 0
+                )
+            ) {
+                isolatedPawnScore += 10;
+            }
+        }
+
+        pawnDeficit += isolatedPawnScore;
     }
 
     // Tapered eval
