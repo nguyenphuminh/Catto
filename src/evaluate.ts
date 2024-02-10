@@ -5,7 +5,7 @@ function pcolor(side: string) {
     return side === "w" ? 0 : 1;
 }
 
-export function evaluateBoard(chessObj: Chess, debug = false) {
+export function evaluateBoard(chessObj: Chess) {
     const board = chessObj.board();
     const side = chessObj.turn();
 
