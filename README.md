@@ -1,6 +1,13 @@
-## The Catto chess engine
-
-Meow...?
+<div align="center">
+    <br/>
+    <img src="./assets/logo.png"/>
+    <br/>
+    <div><b>The Catto Chess Engine</b></div>
+    <br/>
+    <a href="https://github.com/nguyenphuminh/Catto/blob/master/LICENSE.md"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg"/></a>
+    <a href="https://github.com/nguyenphuminh/Catto/releases"><img src="https://img.shields.io/github/package-json/v/nguyenphuminh/Catto?label=stable"></a>
+    <a href="https://github.com/nguyenphuminh/Catto/stargazers"><img src="https://img.shields.io/github/stars/nguyenphuminh/Catto?color=gold"></a>
+</div>
 
 
 ## Dependencies 
@@ -65,18 +72,18 @@ module.exports = {
 
 * Negamax search algorithm with Alpha-Beta pruning.
 * Move ordering:
-	* MVV-LVA heuristic.
-	* Killer heuristic.
-	* History heuristic.
-	* Countermove heuristic.
+    * MVV-LVA heuristic.
+    * Killer heuristic.
+    * History heuristic.
+    * Countermove heuristic.
 * Transposition table (disabled).
 * Null-move pruning.
 * Late move reductions.
 * Checkmate and stalemate detection.
 * Quiescence search.
 * Evalution:
-	* PeSTO evaluation.
-	* Pawn structure.
+    * PeSTO evaluation.
+    * Pawn structure.
 * UCI.
 
 
