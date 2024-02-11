@@ -1,6 +1,6 @@
 <div align="center">
     <br/>
-    <img src="./assets/logo.png"/>
+    <img src="./assets/logo.png?"/>
     <br/>
     <div><b>The Catto Chess Engine</b></div>
     <br/>
