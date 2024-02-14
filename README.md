@@ -58,7 +58,7 @@ module.exports = {
     // The starting position represented as a FEN string
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     // Current version to show in UCI
-    version: "v0.4.0",
+    version: "v0.4.2",
     // Late move reduction config
     lmrFullDepth: 4, // Number of moves to be searched in full depth
     lmrMaxReduction: 3 // Only apply LMR above this depth
@@ -76,7 +76,7 @@ module.exports = {
     * Killer heuristic.
     * History heuristic.
     * Countermove heuristic.
-* Transposition table (disabled).
+* Transposition table (enabled without Zobrist hashing).
 * Null-move pruning.
 * Late move reductions.
 * Checkmate and stalemate detection.

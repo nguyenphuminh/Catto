@@ -70,9 +70,10 @@ export class Engine {
     public hashTable: Record<string, HashEntry> = {};
 
     recordHash(score: number, depth: number, hashFlag: HashFlag) {
-        if (this.stable) return;
+        // if (this.stable) return;
 
-        const hash = genZobristKey(this.chess).toString();
+        // const hash = genZobristKey(this.chess).toString();
+        const hash = this.chess.fen();
         
         this.hashTable[hash] = {
             score,
@@ -82,7 +83,8 @@ export class Engine {
     }
 
     probeHash(alpha: number, beta: number, depth: number): number {
-        const hash = genZobristKey(this.chess).toString();
+        // const hash = genZobristKey(this.chess).toString();
+        const hash = this.chess.fen();
 
         const hashEntry = this.hashTable[hash];
 
@@ -90,7 +92,7 @@ export class Engine {
             // If position does not exist the transposition table
             return 99999;
         
-        if (depth >= hashEntry.depth) {
+        if (depth <= hashEntry.depth) {
             let score = hashEntry.score;
 
             if (score < -48000) score += this.ply;
@@ -345,9 +347,14 @@ export class Engine {
     }
 
     findMove() {
+        const start = Date.now();
+
         this.negamax(this.searchDepth, -50000, 50000);
 
-        if (this.debug) console.log("Nodes searched:", this.nodes);
+        if (this.debug) {
+            console.log("Nodes searched:", this.nodes);
+            console.log(`Finished in: ${Date.now() - start}ms`); 
+        };
 
         return this.bestMove;
     }
