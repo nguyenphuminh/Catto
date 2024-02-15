@@ -79,11 +79,14 @@ module.exports = {
 * Transposition table (enabled without Zobrist hashing).
 * Null-move pruning.
 * Late move reductions.
-* Checkmate and stalemate detection.
+* Search extensions:
+    * Check extensions.
+    * One reply extensions.
 * Quiescence search.
 * Evalution:
     * PeSTO evaluation.
     * Pawn structure.
+* Checkmate and draw detection.
 * UCI.
 
 
