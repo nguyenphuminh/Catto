@@ -22,6 +22,7 @@ export interface EngineOptions {
     searchDepth: number;
     lmrFullDepth: number;
     lmrMaxReduction: number;
+    maxExtensions: number;
     uci: boolean;
     version: string;
 }
@@ -41,6 +42,7 @@ export class Engine {
     public searchedMoves: number = 0;
     public lmrMaxReduction: number;
     public lmrFullDepth: number;
+    public maxExtensions: number;
     public ply: number = 0;
     public prevMove?: Move;
     public bestMove?: Move;
@@ -64,6 +66,7 @@ export class Engine {
         this.stable = options.stable;
         this.lmrMaxReduction = options.lmrMaxReduction;
         this.lmrFullDepth = options.lmrFullDepth;
+        this.maxExtensions = options.maxExtensions;
     }
 
     // Tranposition table
@@ -205,7 +208,23 @@ export class Engine {
         return alpha;
     }
 
-    negamax(depth: number, alpha: number, beta: number): number {
+    // Calculate extensions
+    calculateExtensions() {
+        let extensions = 0;
+
+        // One reply extension and check extension
+        if (this.chess.moves().length === 1 || this.chess.inCheck()) {
+            extensions = 1;
+        }
+
+        return extensions;
+    }
+
+    // The main negamax search algorithm
+    negamax(depth: number, alpha: number, beta: number, extended: number): number {
+        // Calculate extensions
+        const extensions = extended < this.maxExtensions ? this.calculateExtensions() : 0;
+
         this.nodes++;
 
         let hashFlag = HashFlag.alpha;
@@ -237,7 +256,7 @@ export class Engine {
             this.chess.load(tokens.join(" "));
 
             // Search with reduced depth
-            const score = -this.negamax(depth - 1 - 2, -beta, -beta + 1);
+            const score = -this.negamax(depth - 1 - 2, -beta, -beta + 1, extended);
 
             // Reconstruct chess obj prior to null move
             this.chess.load(this.fen);
@@ -282,7 +301,7 @@ export class Engine {
 
             // Late move reduction
             if (this.searchedMoves === 0) {
-                score = -this.negamax(depth-1, -beta, -alpha);
+                score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
             } else {
                 if (
                     this.searchedMoves >= this.lmrFullDepth && 
@@ -291,9 +310,9 @@ export class Engine {
                     !move.captured &&
                     !move.promotion
                 ) {
-                    score = -this.negamax(depth-2, -beta, -alpha);
+                    score = -this.negamax(depth - 2, -beta, -alpha, extended);
                 } else {
-                    score = -this.negamax(depth-1, -beta, -alpha); 
+                    score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions); 
                 }
             }
 
@@ -349,7 +368,7 @@ export class Engine {
     findMove() {
         const start = Date.now();
 
-        this.negamax(this.searchDepth, -50000, 50000);
+        this.negamax(this.searchDepth, -50000, 50000, 0);
 
         if (this.debug) {
             console.log("Nodes searched:", this.nodes);
