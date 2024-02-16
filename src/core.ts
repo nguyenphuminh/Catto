@@ -13,6 +13,7 @@ export interface HashEntry {
     score: number;
     hashFlag: HashFlag,
     depth: number;
+    move: Move
 }
 
 export interface EngineOptions {
@@ -39,7 +40,6 @@ export class Engine {
     public stable: boolean;
     public searchDepth: number;
     public nodes: number = 0;
-    public searchedMoves: number = 0;
     public lmrMaxReduction: number;
     public lmrFullDepth: number;
     public maxExtensions: number;
@@ -72,7 +72,7 @@ export class Engine {
     // Tranposition table
     public hashTable: Record<string, HashEntry> = {};
 
-    recordHash(score: number, depth: number, hashFlag: HashFlag) {
+    recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move) {
         // if (this.stable) return;
 
         // const hash = genZobristKey(this.chess).toString();
@@ -81,7 +81,8 @@ export class Engine {
         this.hashTable[hash] = {
             score,
             depth,
-            hashFlag
+            hashFlag,
+            move
         }
     }
 
@@ -114,8 +115,17 @@ export class Engine {
 
     // Move ordering
     getMovePrio(move: Move): number {
-        // Killer heuristic and history heuristic
         let priority = 0;
+
+        // Hash Move
+        const currentBoardHash = this.chess.fen();
+        if (
+            this.hashTable[currentBoardHash] && 
+            this.hashTable[currentBoardHash].move &&
+            move.san === this.hashTable[currentBoardHash].move.san
+        ) {
+            priority += 100000;
+        }
     
         // Non-capture moves
         if (!move.captured) {
@@ -231,7 +241,7 @@ export class Engine {
 
         // Detecting 3-fold repetition
         if (this.ply && this.chess.isThreefoldRepetition()) {
-            this.recordHash(0, depth, HashFlag.exact);
+            this.recordHash(0, depth, HashFlag.exact, this.prevMove!);
             return 0;
         }
 
@@ -288,6 +298,7 @@ export class Engine {
 
         // Sort moves
         possibleMoves = this.sortMoves(possibleMoves);
+        let searchedMoves = 0, bestMoveSoFar: Move;
 
         // Find the best move
         for (const move of possibleMoves) {
@@ -300,32 +311,33 @@ export class Engine {
             let score = 0;
 
             // Late move reduction
-            if (this.searchedMoves === 0) {
+            if (searchedMoves === 0) {
                 score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
             } else {
                 if (
-                    this.searchedMoves >= this.lmrFullDepth && 
+                    searchedMoves >= this.lmrFullDepth && 
                     depth >= this.lmrMaxReduction && 
                     !this.chess.inCheck() &&
                     !move.captured &&
-                    !move.promotion
+                    !move.promotion &&
+                    extensions === 0
                 ) {
                     score = -this.negamax(depth - 2, -beta, -alpha, extended);
                 } else {
-                    score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions); 
+                    score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
                 }
             }
-
-            this.searchedMoves++;
 
             // Take back move
             this.chess.undo();
             this.ply--;
 
+            searchedMoves++;
+
             // Fail-hard beta cutoff
             if (score >= beta) {
                 // Store move in the case of a fail-hard beta cutoff
-                this.recordHash(beta, depth, HashFlag.beta);
+                this.recordHash(beta, depth, HashFlag.beta, move);
 
                 if (!move.captured) { // Only quiet moves
                     // Store killer moves
@@ -343,6 +355,8 @@ export class Engine {
 
             // Found better move
             if (score > alpha) {
+                bestMoveSoFar = move;
+
                 hashFlag = HashFlag.exact;
 
                 // Store history moves
@@ -359,7 +373,7 @@ export class Engine {
             }
         }
 
-        this.recordHash(alpha, depth, hashFlag);
+        this.recordHash(alpha, depth, hashFlag, bestMoveSoFar!);
 
         // Node fails low
         return alpha;
