@@ -12,5 +12,5 @@ module.exports = {
     lmrMaxReduction: 3,
 
     // Search extensions config
-    maxExtensions: 2
+    maxExtensions: 1
 }
