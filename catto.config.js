@@ -3,7 +3,7 @@ module.exports = {
     searchDepth: 5,
     uci: true,
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    version: "v0.5.1",
+    version: "v0.5.2",
     debug: false,
     // stable: true,
 

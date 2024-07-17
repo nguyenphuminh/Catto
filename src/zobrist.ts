@@ -68,9 +68,13 @@ export function genZobristKey(chessObj: Chess) {
             if (board[x][y] === null) continue;
 
             const piece = board[x][y]!.type;
-            const pieceNum = PIECE_NUM[piece];   
+            const pieceColor = board[x][y]!.color;
+            const pieceNum = PIECE_NUM[piece];
             
+            // Hash piece type
             hash ^= hashTable[pieceNum][x][y];
+            // Hash piece color
+            hash ^= pieceColor === "b" ? side[0] : side[1];
         }
     }
 
@@ -82,7 +86,7 @@ export function genZobristKey(chessObj: Chess) {
     if (castlingRights.includes("K")) { hash ^= castleHash[2]; }
     if (castlingRights.includes("Q")) { hash ^= castleHash[3]; }
 
-    // Hash side
+    // Hash turn
     hash ^= chessObj.turn() === "b" ? side[0] : side[1];
 
     // Hash enpassant square if any
