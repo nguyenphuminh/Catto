@@ -1,6 +1,6 @@
 module.exports = {
     // General
-    searchDepth: 5,
+    searchDepth: 4,
     uci: true,
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     version: "v0.5.2",
