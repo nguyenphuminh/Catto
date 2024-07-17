@@ -75,8 +75,8 @@ export class Engine {
     recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move) {
         // if (this.stable) return;
 
-        // const hash = genZobristKey(this.chess).toString();
-        const hash = this.chess.fen();
+        const hash = genZobristKey(this.chess).toString();
+        // const hash = this.chess.fen();
         
         this.hashTable[hash] = {
             score,
@@ -87,8 +87,8 @@ export class Engine {
     }
 
     probeHash(alpha: number, beta: number, depth: number): number {
-        // const hash = genZobristKey(this.chess).toString();
-        const hash = this.chess.fen();
+        const hash = genZobristKey(this.chess).toString();
+        // const hash = this.chess.fen();
 
         const hashEntry = this.hashTable[hash];
 
@@ -118,7 +118,8 @@ export class Engine {
         let priority = 0;
 
         // Hash Move
-        const currentBoardHash = this.chess.fen();
+        // const currentBoardHash = this.chess.fen();
+        const currentBoardHash = genZobristKey(this.chess).toString();
         if (
             this.hashTable[currentBoardHash] && 
             this.hashTable[currentBoardHash].move &&
@@ -322,7 +323,11 @@ export class Engine {
                     !move.promotion &&
                     extensions === 0
                 ) {
-                    score = -this.negamax(depth - 2, -beta, -alpha, extended);
+                    score = -this.negamax(depth - 2, -alpha-1, -alpha, extended);
+
+                    if (score > alpha) {
+                        score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
+                    }
                 } else {
                     score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
                 }

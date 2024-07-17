@@ -1,11 +1,11 @@
 {
   "name": "catto",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "The Catto chess engine",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc & pkg index.js -o catto"
+    "build": "npx tsc & pkg index.js --target node18 -o catto"
   },
   "repository": {
     "type": "git",
