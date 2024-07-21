@@ -49,10 +49,6 @@ There are several configurations for Catto that you can change in `catto.config.
 module.exports = {
     // Search depth
     searchDepth: 4,
-    // Set to true to turn on debug mode, will log out useful info
-    debug: false,
-    // If you disable stable mode, features that are in-dev and might cause issues will be turned on
-    stable: true,
     // The starting position represented as a FEN string
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     // Current version to show in UCI
