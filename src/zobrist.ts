@@ -79,7 +79,9 @@ export function genZobristKey(chessObj: Chess) {
     }
 
     // Hash castling rights
-    const castlingRights = chessObj.fen().split(" ")[2];
+    const fen = chessObj.fen();
+
+    const castlingRights = fen.split(" ")[2];
 
     if (castlingRights.includes("k")) { hash ^= castleHash[0]; }
     if (castlingRights.includes("q")) { hash ^= castleHash[1]; }
@@ -90,7 +92,7 @@ export function genZobristKey(chessObj: Chess) {
     hash ^= chessObj.turn() === "b" ? side[0] : side[1];
 
     // Hash enpassant square if any
-    const epSquare = chessObj.fen().split(" ")[3];
+    const epSquare = fen.split(" ")[3];
     if (epSquare !== "-") {
         const [ epX, epY ] = sqToXY(epSquare);
 

@@ -48,20 +48,20 @@ There are several configurations for Catto that you can change in `catto.config.
 ```js
 module.exports = {
     // Search depth
-    searchDepth: 5,
+    searchDepth: 4,
     // Set to true to turn on debug mode, will log out useful info
-    debug: true,
+    debug: false,
     // If you disable stable mode, features that are in-dev and might cause issues will be turned on
     stable: true,
-    // Leave true if you want UCI enabled, otherwise it will ask for a FEN string and log out the best position
-    uci: true,
     // The starting position represented as a FEN string
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     // Current version to show in UCI
-    version: "v0.4.2",
+    version: "v0.6.0",
     // Late move reduction config
     lmrFullDepth: 4, // Number of moves to be searched in full depth
-    lmrMaxReduction: 3 // Only apply LMR above this depth
+    lmrMaxReduction: 3, // Only apply LMR above this depth
+    // Search extensions config
+    maxExtensions: 2 // Seach extension limit
 }
 ```
 
@@ -70,13 +70,14 @@ module.exports = {
 
 ### The engine
 
-* Negamax search algorithm with Alpha-Beta pruning.
+* Principle variation search.
 * Move ordering:
+    * Hash move ordering.
     * MVV-LVA heuristic.
     * Killer heuristic.
     * History heuristic.
     * Countermove heuristic.
-* Transposition table (enabled without Zobrist hashing).
+* Transposition table.
 * Null-move pruning.
 * Late move reductions.
 * Search extensions:
@@ -93,11 +94,6 @@ module.exports = {
 ## Todos
 
 See todos for Catto [here](https://github.com/users/nguyenphuminh/projects/2).
-
-
-## This looks familiar...
-
-This used to be the Meow chess engine but I have decided to rebuilt it from the ground up because the old codebase is too messy and I lost track of what I was doing. Catto is written in Typescript and is designed to be more modular.
 
 
 ## Copyrights
