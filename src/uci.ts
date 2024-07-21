@@ -71,16 +71,12 @@ export class UCI {
                 }
             }
         }
-        // console.log(this.engine.chess.ascii());
     }
 
     handleGo(command: string) { // To be updated
-        // const start = Date.now();
         const result = this.engine.findMove();
 
         console.log(`info depth ${result.depth} score cp ${Math.round(result.evaluation)} time ${result.time} nodes ${result.nodes} pv ${result.pvTable.join(" ")}`);
         console.log(`bestmove ${result.bestMove?.lan}`);
-        // console.log(this.engine.nodes);
-        // console.log(Date.now() - start);
     }
 }
