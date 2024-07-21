@@ -36,8 +36,6 @@ export interface HistoryMove {
 export class Engine {
     public chess: Chess;
     public fen: string;
-    public debug: boolean;
-    public stable: boolean;
     public searchDepth: number;
     public nodes: number = 0;
     public lmrMaxReduction: number;
@@ -57,16 +55,19 @@ export class Engine {
         "w": [ {}, {}, {}, {}, {}, {} ]
     }
 
+    // PV table
+    public pvTable: string[];
+
     constructor(options: EngineOptions) {
         this.fen = options.fen;
-        this.debug = options.debug;
         this.searchDepth = options.searchDepth;
         this.chess = new Chess(this.fen);
         this.uci = options.uci;
-        this.stable = options.stable;
         this.lmrMaxReduction = options.lmrMaxReduction;
         this.lmrFullDepth = options.lmrFullDepth;
         this.maxExtensions = options.maxExtensions;
+
+        this.pvTable = new Array(this.searchDepth).fill("");
     }
 
     // Tranposition table
@@ -384,6 +385,9 @@ export class Engine {
                 if (this.ply === 0) {
                     this.bestMove = move;
                 }
+
+                // Store pv move
+                this.pvTable[this.ply] = move.lan;
             }
         }
 
@@ -393,16 +397,25 @@ export class Engine {
         return alpha;
     }
 
-    findMove() {
+    findMove(): {
+        bestMove: Move | undefined;
+        time: number;
+        depth: number;
+        nodes: number;
+        pvTable: string[];
+        evaluation: number;
+    } {
         const start = Date.now();
 
-        this.negamax(this.searchDepth, -50000, 50000, 0);
+        const evaluation = this.negamax(this.searchDepth, -50000, 50000, 0);
 
-        if (this.debug) {
-            console.log("Nodes searched:", this.nodes);
-            console.log(`Finished in: ${Date.now() - start}ms`); 
+        return {
+            bestMove: this.bestMove,
+            time: Date.now() - start,
+            depth: this.searchDepth,
+            nodes: this.nodes,
+            pvTable: this.pvTable,
+            evaluation
         };
-
-        return this.bestMove;
     }
 }
