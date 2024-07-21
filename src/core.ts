@@ -311,10 +311,11 @@ export class Engine {
             this.chess.move(move);
             let score = 0;
 
-            // Late move reduction
+            // Do normal, alpha-beta full search on first (PV) move
             if (searchedMoves === 0) {
                 score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
             } else {
+                // Late move reduction
                 if (
                     searchedMoves >= this.lmrFullDepth && 
                     depth >= this.lmrMaxReduction && 
@@ -323,15 +324,23 @@ export class Engine {
                     !move.promotion &&
                     extensions === 0
                 ) {
-                    score = -this.negamax(depth - 2, -alpha-1, -alpha, extended);
+                    score = -this.negamax(depth - 2, -alpha-1, -alpha, extended);   
+                } else { // Raise score to enable full search
+                    score = alpha + 1;
+                }
 
-                    if (score > alpha) {
+                // Principal variation search
+                if (score > alpha) {
+                    // Try to prove that remaining moves are bad by considering if they can raise alpha or not
+                    score = -this.negamax(depth - 1 + extensions, -alpha-1, -alpha, extended + extensions);
+
+                    // If they can indeed raise alpha, we have to re-search with normal alpha-beta full search
+                    if (score > alpha && score < beta) {
                         score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
                     }
-                } else {
-                    score = -this.negamax(depth - 1 + extensions, -beta, -alpha, extended + extensions);
                 }
             }
+
 
             // Take back move
             this.chess.undo();

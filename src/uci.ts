@@ -11,60 +11,42 @@ export class UCI {
     }
 
     start() {
-        // If UCI is not enabled, takes in a FEN value and outputs best move
-        if (!this.engine.uci) {
-            const io = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
-            
-            io.question("Enter FEN value: ", fen => {
-                this.engine = new Engine({ ...this.engineOptions, fen });
+        const uci = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            terminal: false
+        });
 
-                console.log("Move:\n", this.engine.findMove());
-            
-                console.log("Searched nodes:", this.engine.nodes);
+        uci.on("line", command => {
+            switch (command) {
+                case "uci":
+                    console.log("id name Catto " + this.engineOptions.version);
+                    console.log("id author nguyenphuminh");
+                    console.log("uciok");
+
+                    break;
                 
-                io.close();
-            });
-        } else {
-            const uci = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout,
-                terminal: false
-            });
+                case "isready":
+                    console.log("readyok");
+                    break;
+                
+                case "ucinewgame":
+                    this.handlePosition("position startpos");
+                    break;
 
-            uci.on("line", command => {
-                switch (command) {
-                    case "uci":
-                        console.log("id name Catto " + this.engineOptions.version);
-                        console.log("id author nguyenphuminh");
-                        console.log("uciok");
+                case "quit":
+                    process.exit(1);
 
-                        break;
+                default:
+                    if (command.includes("position")) {
+                        this.handlePosition(command);
+                    }
                     
-                    case "isready":
-                        console.log("readyok");
-                        break;
-                    
-                    case "ucinewgame":
-                        this.handlePosition("position startpos");
-                        break;
-
-                    case "quit":
-                        process.exit(1);
-
-                    default:
-                        if (command.includes("position")) {
-                            this.handlePosition(command);
-                        }
-                        
-                        if (command.includes("go")) {
-                            this.handleGo(command);
-                        }
-                }
-            })
-        }
+                    if (command.includes("go")) {
+                        this.handleGo(command);
+                    }
+            }
+        })
     }
 
     handlePosition(command: string) {
@@ -93,8 +75,11 @@ export class UCI {
     }
 
     handleGo(command: string) { // To be updated
+        // const start = Date.now();
         const bestMove = this.engine.findMove();
 
         console.log(`bestmove ${bestMove?.lan}`);
+        // console.log(this.engine.nodes);
+        // console.log(Date.now() - start);
     }
 }

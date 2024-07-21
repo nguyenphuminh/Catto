@@ -1,4 +1,4 @@
-import { Chess, PieceSymbol } from "chess.js";
+import { Chess } from "chess.js";
 import { mgTable, egTable, gamephaseInc, PIECE_NUM, mgMaterial, egMaterial } from "./evaluations";
 
 function pcolor(side: string) { 
