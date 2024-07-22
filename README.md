@@ -47,12 +47,8 @@ There are several configurations for Catto that you can change in `catto.config.
 
 ```js
 module.exports = {
-    // Search depth
-    searchDepth: 4,
-    // The starting position represented as a FEN string
-    fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     // Current version to show in UCI
-    version: "v0.6.0",
+    version: "v0.7.0",
     // Late move reduction config
     lmrFullDepth: 4, // Number of moves to be searched in full depth
     lmrMaxReduction: 3, // Only apply LMR above this depth
@@ -60,6 +56,8 @@ module.exports = {
     maxExtensions: 2 // Seach extension limit
 }
 ```
+
+Note that the config file is compiled with the engine itself, so if you are using the built version, like `catto.exe`, creating a `catto.config.js` file will have no effect.
 
 
 ## What do we currently have?
@@ -84,6 +82,10 @@ module.exports = {
     * PeSTO evaluation.
     * Pawn structure.
 * Checkmate and draw detection.
+* Iterative deepening.
+* Aspiration windows.
+* Time control:
+    * Fixed time per move: 1/30 of the remaining time.
 * UCI.
 
 
