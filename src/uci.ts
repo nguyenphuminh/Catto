@@ -18,7 +18,7 @@ export class UCI {
         });
 
         uci.on("line", command => {
-            switch (command) {
+            switch (command.trim()) {
                 case "uci":
                     console.log("id name Catto " + this.engineOptions.version);
                     console.log("id author nguyenphuminh");
@@ -36,13 +36,17 @@ export class UCI {
 
                 case "quit":
                     process.exit(1);
+                
+                case "stop":
+                    this.engine.stopped = true;
+                    break;
 
                 default:
-                    if (command.includes("position")) {
+                    if (command.startsWith("position")) {
                         this.handlePosition(command);
                     }
                     
-                    if (command.includes("go")) {
+                    if (command.startsWith("go")) {
                         this.handleGo(command);
                     }
             }
@@ -50,18 +54,24 @@ export class UCI {
     }
 
     handlePosition(command: string) {
-        const args = command.split(" ");
+        const args = command.split(" "), movesString = command.split("moves ")[1];
+        
+        let fen = "";
 
         // Load position
-        if (args[1].includes("startpos")) { 
-            this.engine = new Engine(this.engineOptions);
+        if (args[1] === "startpos") {
+            fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         } else if (args[1] === "fen") {
-            this.engine = new Engine({ ...this.engineOptions, fen: command.split("position fen ")[1] });
+            if (movesString) {
+                fen = command.split("position fen ")[1].split(" moves ")[0];
+            } else {
+                fen = command.split("position fen ")[1];
+            }
         }
 
+        this.engine = new Engine({ ...this.engineOptions, fen });
+
         // Load moves
-        const movesString = command.split("moves ")[1];
-        
         if (movesString) {
             const moves = command.split("moves ")[1].split(" ").filter(move => move.length !== 0);
     
@@ -74,9 +84,38 @@ export class UCI {
     }
 
     handleGo(command: string) { // To be updated
-        const result = this.engine.findMove();
+        const args = command.split(" ");
+        const side = this.engine.chess.turn();
 
-        console.log(`info depth ${result.depth} score cp ${Math.round(result.evaluation)} time ${result.time} nodes ${result.nodes} pv ${result.pvTable.join(" ")}`);
-        console.log(`bestmove ${result.bestMove?.lan}`);
+        let timeout = 99999999999;
+
+        for (let i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "wtime":
+                    if (side === "w") {
+                        timeout = Math.floor(parseInt(args[i+1]) * 1 / 30);
+                        i++;
+                    }
+
+                    break;
+
+                case "btime":
+                    if (side === "b") {
+                        timeout = Math.floor(parseInt(args[i+1]) * 1 / 30);
+                        i++;
+                    }
+
+                    break;
+
+                case "movetime":
+                    timeout = parseInt(args[i+1]);
+                    i++;
+
+                    break;
+            }
+        }
+
+        this.engine.timeout = timeout;
+        this.engine.findMove();
     }
 }

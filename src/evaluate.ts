@@ -25,54 +25,48 @@ export function evaluateBoard(chessObj: Chess) {
 
             const color = pcolor(board[x][y]!.color);
 
-            // Count material
-            mg[color] += mgMaterial[PIECE_NUM[board[x][y]!.type]];
-            eg[color] += egMaterial[PIECE_NUM[board[x][y]!.type]];
-
-            // Count square value
-            mg[color] += mgTable[board[x][y]!.color + board[x][y]!.type][x][y];
-            eg[color] += egTable[board[x][y]!.color + board[x][y]!.type][x][y];
+            // Count material and square value
+            mg[color] += mgMaterial[PIECE_NUM[board[x][y]!.type]] + mgTable[board[x][y]!.color + board[x][y]!.type][x][y];
+            eg[color] += egMaterial[PIECE_NUM[board[x][y]!.type]] + egTable[board[x][y]!.color + board[x][y]!.type][x][y];
 
             // Guess game phase based on material
             gamePhase += gamephaseInc[PIECE_NUM[board[x][y]!.type]];
 
             // Count pawns in a file
             if (board[x][y]!.type === "p") {
-                file[pcolor(board[x][y]!.color)][y] += 1;
+                file[color][y] += 1;
             }
         }
     }
 
     // Pawn structure eval
-    let pawnDeficit = 0;
+    let pawnDeficit = 0, us = pcolor(side), enemy = pcolor(side) ^ 1;
 
     for (let index = 0; index < 8; index++) {
         // Doubled pawns of us
-        pawnDeficit -= file[pcolor(side)][index] >= 1 ? (file[pcolor(side)][index] - 1) * 20 : 0;
-        // Doubled pawns of the opponent
-        pawnDeficit += file[pcolor(side) ^ 1][index] >= 1 ? (file[pcolor(side) ^ 1][index] - 1) * 20 : 0;
-    
+        pawnDeficit -= (file[us][index] >= 1 ? (file[us][index] - 1) * 20 : 0) - (file[enemy][index] >= 1 ? (file[enemy][index] - 1) * 20 : 0);
+
         let isolatedPawnScore = 0;
 
         // Isolated pawns of us
-        if (file[pcolor(side)][index] >= 1) {
+        if (file[us][index] >= 1) {
             if (
                 // If pawn is from b to g file
                 (
                     index > 0 && 
                     index < 7 &&
-                    file[pcolor(side)][index - 1] === 0 &&
-                    file[pcolor(side)][index + 1] === 0
+                    file[us][index - 1] === 0 &&
+                    file[us][index + 1] === 0
                 ) ||
                 // If pawn is from a file
                 (
                     index === 0 &&
-                    file[pcolor(side)][index + 1] === 0
+                    file[us][index + 1] === 0
                 ) ||
                 // If pawn is from h file
                 (
                     index === 7 &&
-                    file[pcolor(side)][index - 1] === 0
+                    file[us][index - 1] === 0
                 )
             ) {
                 isolatedPawnScore -= 10;
@@ -80,24 +74,24 @@ export function evaluateBoard(chessObj: Chess) {
         }
 
         // Isolated pawns of the opponent
-        if (file[pcolor(side) ^ 1][index] >= 1) {
+        if (file[enemy][index] >= 1) {
             if (
                 // If pawn is from b to g file
                 (
                     index > 0 && 
                     index < 7 &&
-                    file[pcolor(side) ^ 1][index - 1] === 0 &&
-                    file[pcolor(side) ^ 1][index + 1] === 0
+                    file[enemy][index - 1] === 0 &&
+                    file[enemy][index + 1] === 0
                 ) ||
                 // If pawn is from a file
                 (
                     index === 0 &&
-                    file[pcolor(side) ^ 1][index + 1] === 0
+                    file[enemy][index + 1] === 0
                 ) ||
                 // If pawn is from h file
                 (
                     index === 7 &&
-                    file[pcolor(side) ^ 1][index - 1] === 0
+                    file[enemy][index - 1] === 0
                 )
             ) {
                 isolatedPawnScore += 10;
@@ -108,8 +102,8 @@ export function evaluateBoard(chessObj: Chess) {
     }
 
     // Tapered eval
-    let mgScore = mg[pcolor(side)] - mg[pcolor(side) ^ 1];
-    let egScore = eg[pcolor(side)] - eg[pcolor(side) ^ 1];
+    let mgScore = mg[us] - mg[enemy];
+    let egScore = eg[us] - eg[enemy];
 
     let mgPhase = gamePhase;
     

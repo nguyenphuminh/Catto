@@ -45,6 +45,12 @@ export class Engine {
     public prevMove?: Move;
     public bestMove?: Move;
     public uci: boolean = false;
+
+    // Used for engine termination
+    public startTime: number = 0;
+    public timeout: number = 99999999999;
+    public stopped: boolean = false;
+
     // Used for killer move heuristic
     public killerMove = [ new Array(64).fill(null), new Array(64).fill(null) ];
     // Used for counter move heuristic
@@ -59,8 +65,8 @@ export class Engine {
     public pvTable: string[];
 
     constructor(options: EngineOptions) {
-        this.fen = options.fen;
-        this.searchDepth = options.searchDepth;
+        this.fen = options.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        this.searchDepth = options.searchDepth || 64;
         this.chess = new Chess(this.fen);
         this.uci = options.uci;
         this.lmrMaxReduction = options.lmrMaxReduction;
@@ -115,12 +121,11 @@ export class Engine {
     }
 
     // Move ordering
-    getMovePrio(move: Move): number {
+    getMovePrio(move: Move, currentBoardHash: string): number {
         let priority = 0;
 
         // Hash Move
         // const currentBoardHash = this.chess.fen();
-        const currentBoardHash = genZobristKey(this.chess).toString();
         if (
             this.hashTable[currentBoardHash] && 
             this.hashTable[currentBoardHash].move &&
@@ -162,13 +167,10 @@ export class Engine {
     }
 
     sortMoves(moves: Move[]) {
-        const scoredMoves: { move: Move, priority: number }[] = [];
-        
-        for (const move of moves) { 
-            scoredMoves.push({ move, priority: this.getMovePrio(move) }); 
-        }
+        const currentBoardHash = genZobristKey(this.chess).toString();
 
-        return scoredMoves
+        return moves
+            .map(move => ({ move, priority: this.getMovePrio(move, currentBoardHash) }))
             .sort((moveA, moveB) => moveB.priority - moveA.priority)
             .map(scoredMove => scoredMove.move);
     }
@@ -203,6 +205,9 @@ export class Engine {
             this.ply--;
 
             this.chess.undo(); // Take back move
+            
+            // Return 0 if engine is forced to stop
+            if (this.stopped || Date.now() - this.startTime > this.timeout) return 0;
 
             // fail-hard beta cutoff
             if (score >= beta) {
@@ -221,11 +226,11 @@ export class Engine {
     }
 
     // Calculate extensions
-    calculateExtensions() {
+    calculateExtensions(moves: number, inCheck: boolean) {
         let extensions = 0;
 
         // One reply extension and check extension
-        if (this.chess.moves().length === 1 || this.chess.inCheck()) {
+        if (moves === 1 || inCheck) {
             extensions = 1;
         }
 
@@ -234,8 +239,7 @@ export class Engine {
 
     // The main negamax search algorithm
     negamax(depth: number, alpha: number, beta: number, extended: number): number {
-        // Calculate extensions
-        const extensions = extended < this.maxExtensions ? this.calculateExtensions() : 0;
+        const inCheck = this.chess.inCheck();
 
         this.nodes++;
 
@@ -257,7 +261,7 @@ export class Engine {
         if (depth === 0) return this.quiescence(alpha, beta);
 
         // Null move pruning
-        if (this.ply && depth >= 3 && !this.chess.inCheck()) {
+        if (this.ply && depth >= 3 && !inCheck) {
             // Preserve old moves to reconstruct chess obj
             const oldMoves = this.chess.history();
 
@@ -287,7 +291,7 @@ export class Engine {
 
         // Detecting checkmates and stalemates
         if (possibleMoves.length === 0) {    
-            if (this.chess.inCheck()) {
+            if (inCheck) {
                 return -49000 + this.ply; // Checkmate
 
                 // Ply is added because:
@@ -297,6 +301,9 @@ export class Engine {
 
             return 0; // Stalemate
         }
+
+        // Calculate extensions
+        const extensions = extended < this.maxExtensions ? this.calculateExtensions(possibleMoves.length, inCheck) : 0;
 
         // Sort moves
         possibleMoves = this.sortMoves(possibleMoves);
@@ -349,6 +356,9 @@ export class Engine {
 
             searchedMoves++;
 
+            // Return 0 if engine is forced to stop
+            if (this.stopped || Date.now() - this.startTime > this.timeout) return 0;
+
             // Fail-hard beta cutoff
             if (score >= beta) {
                 // Store move in the case of a fail-hard beta cutoff
@@ -397,25 +407,35 @@ export class Engine {
         return alpha;
     }
 
-    findMove(): {
-        bestMove: Move | undefined;
-        time: number;
-        depth: number;
-        nodes: number;
-        pvTable: string[];
-        evaluation: number;
-    } {
-        const start = Date.now();
+    findMove() {
+        // Iterative deepening with aspiration windows
+        this.startTime = Date.now();
 
-        const evaluation = this.negamax(this.searchDepth, -50000, 50000, 0);
+        let alpha = -50000, beta = 50000, score = 0, currentBestMove = null;
 
-        return {
-            bestMove: this.bestMove,
-            time: Date.now() - start,
-            depth: this.searchDepth,
-            nodes: this.nodes,
-            pvTable: this.pvTable,
-            evaluation
-        };
+        for (let depth = 1; depth <= this.searchDepth; depth++) {
+            // Stop searching if forced to stop
+            if (this.stopped || Date.now() - this.startTime > this.timeout) {
+                break;
+            }
+
+            score = this.negamax(depth, alpha, beta, 0);
+
+            if (score <= alpha || score >= beta) {
+                alpha = -50000;    
+                beta = 50000;
+                depth--;
+                continue;
+            }
+
+            alpha = score - 50;
+            beta = score + 50;
+
+            console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv ${this.pvTable.join(" ").trim()}`);
+
+            currentBestMove = this.bestMove;
+        }
+
+        console.log(`bestmove ${currentBestMove?.lan}`);
     }
 }
