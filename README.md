@@ -14,6 +14,7 @@
 
 * Node.js & npm
 
+Note that you may also want to use Bun which is a much faster JS runtime env than Node.js.
 
 ## Setup
 
