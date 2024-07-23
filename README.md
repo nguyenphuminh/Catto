@@ -16,6 +16,7 @@
 
 Note that you may also want to use Bun which is a much faster JS runtime env than Node.js.
 
+
 ## Setup
 
 1. Clone the repository to your machine.
@@ -74,6 +75,7 @@ Note that the config file is compiled with the engine itself, so if you are usin
     * Countermove heuristic.
 * Transposition table.
 * Null-move pruning.
+* Futility pruning.
 * Late move reductions.
 * Search extensions:
     * Check extensions.

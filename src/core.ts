@@ -1,7 +1,8 @@
-import { Chess, Color, Move } from "chess.js";
+import { Chess, Move } from "chess.js";
 import { evaluateBoard } from "./evaluate";
 import { mvv_lva, PIECE_NUM } from "./evaluations";
 import { genZobristKey } from "./zobrist";
+import { mgMaterial } from "./evaluations";
 
 export enum HashFlag {
     exact,
@@ -309,6 +310,15 @@ export class Engine {
         possibleMoves = this.sortMoves(possibleMoves);
         let searchedMoves = 0, bestMoveSoFar: Move;
 
+        // Futility pruning
+        let fpEnabled = false;
+        if (depth < 4 && Math.abs(alpha) < 48000) {
+            const currentEval = evaluateBoard(this.chess);
+            // Margin for each depth, the shallower the depth the more we reduce the margin
+            const futilityMargin = [ 0, mgMaterial[0], mgMaterial[1], mgMaterial[3] ];
+            fpEnabled = currentEval + futilityMargin[depth] <= alpha;
+        }
+
         // Find the best move
         for (const move of possibleMoves) {
             // const tempMove = move;
@@ -318,6 +328,19 @@ export class Engine {
             this.ply++;
             this.chess.move(move);
             let score = 0;
+
+            // Apply futility pruning
+            if (
+                fpEnabled &&
+                searchedMoves > 0 &&
+                !move.captured &&
+                !move.promotion &&
+                !this.chess.inCheck()
+            ) { 
+                this.chess.undo();
+                this.ply--;
+                continue;
+            }
 
             // Do normal, alpha-beta full search on first (PV) move
             if (searchedMoves === 0) {
