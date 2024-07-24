@@ -14,6 +14,10 @@ export function evaluateBoard(chessObj: Chess) {
         , file = [ 
             [ 0, 0, 0, 0, 0, 0, 0, 0 ],
             [ 0, 0, 0, 0, 0, 0, 0, 0 ]
+        ]
+        , rooksOnFile = [
+            new Array(8).fill(0),
+            new Array(8).fill(0)
         ];
 
     let gamePhase = 0;
@@ -36,20 +40,30 @@ export function evaluateBoard(chessObj: Chess) {
             if (board[x][y]!.type === "p") {
                 file[color][y] += 1;
             }
+
+            // Check if rook is in a file
+            if (board[x][y]!.type === "r") {
+                rooksOnFile[color][y] += 1;
+            }
         }
     }
 
     // Pawn structure eval
-    let pawnDeficit = 0, us = pcolor(side), enemy = pcolor(side) ^ 1;
+    let pawnDeficit = 0, rookScore = 0, us = pcolor(side), enemy = pcolor(side) ^ 1;
 
     for (let index = 0; index < 8; index++) {
-        // Doubled pawns of us
+        // Doubled pawns eval
         pawnDeficit -= (file[us][index] >= 1 ? (file[us][index] - 1) * 20 : 0) - (file[enemy][index] >= 1 ? (file[enemy][index] - 1) * 20 : 0);
 
-        let isolatedPawnScore = 0;
+        // Rooks on open/half open file:
+        rookScore += (file[us][index] === 0 ? 20 * rooksOnFile[us][index] : 0) - (file[enemy][index] === 0 ? 20 * rooksOnFile[enemy][index] : 0);
 
-        // Isolated pawns of us
+        // Isolated/passed pawns eval
+        let isolatedPawnScore = 0, passedPawnScore = 0;
+
+        // Isolated/passed pawns of us
         if (file[us][index] >= 1) {
+            // Isolated pawns
             if (
                 // If pawn is from b to g file
                 (
@@ -71,9 +85,35 @@ export function evaluateBoard(chessObj: Chess) {
             ) {
                 isolatedPawnScore -= 10;
             }
+
+            // Passed pawns
+            if (
+                // If pawn is from b to g file
+                (
+                    index > 0 && 
+                    index < 7 &&
+                    file[enemy][index - 1] === 0 &&
+                    file[enemy][index + 1] === 0 &&
+                    file[enemy][index] === 0
+                ) ||
+                // If pawn is from a file
+                (
+                    index === 0 &&
+                    file[enemy][index + 1] === 0 &&
+                    file[enemy][index] === 0
+                ) ||
+                // If pawn is from h file
+                (
+                    index === 7 &&
+                    file[enemy][index - 1] === 0 &&
+                    file[enemy][index] === 0
+                )
+            ) {
+                passedPawnScore += 20;
+            }
         }
 
-        // Isolated pawns of the opponent
+        // Isolated/double pawns of the enemy
         if (file[enemy][index] >= 1) {
             if (
                 // If pawn is from b to g file
@@ -96,9 +136,35 @@ export function evaluateBoard(chessObj: Chess) {
             ) {
                 isolatedPawnScore += 10;
             }
+
+            // Passed pawns
+            if (
+                // If pawn is from b to g file
+                (
+                    index > 0 && 
+                    index < 7 &&
+                    file[us][index - 1] === 0 &&
+                    file[us][index + 1] === 0 &&
+                    file[us][index] === 0
+                ) ||
+                // If pawn is from a file
+                (
+                    index === 0 &&
+                    file[us][index + 1] === 0 &&
+                    file[us][index] === 0
+                ) ||
+                // If pawn is from h file
+                (
+                    index === 7 &&
+                    file[us][index - 1] === 0 &&
+                    file[us][index] === 0
+                )
+            ) {
+                passedPawnScore -= 20;
+            }
         }
 
-        pawnDeficit += isolatedPawnScore;
+        pawnDeficit += isolatedPawnScore + passedPawnScore;
     }
 
     // Tapered eval
@@ -110,8 +176,6 @@ export function evaluateBoard(chessObj: Chess) {
     if (mgPhase > 24) mgPhase = 24; // Early promotion might lead to out-of-bound score
     
     let egPhase = 24 - mgPhase;
-
-    // console.log(chessObj.ascii(), (mgScore * mgPhase + egScore * egPhase) / 24);
     
-    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit;
+    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit + rookScore;
 }
