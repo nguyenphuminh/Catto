@@ -76,6 +76,7 @@ Note that the config file is compiled with the engine itself, so if you are usin
 * Transposition table.
 * Null-move pruning.
 * Futility pruning.
+* Delta pruning.
 * Late move reductions.
 * Search extensions:
     * Check extensions.
