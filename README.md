@@ -74,22 +74,23 @@ Note that the config file is compiled with the engine itself, so if you are usin
     * History heuristic.
     * Countermove heuristic.
 * Transposition table.
-* Null-move pruning.
-* Futility pruning.
-* Delta pruning.
+* Pruning:
+    * Null-move pruning.
+    * Futility pruning.
+    * Delta pruning.
 * Late move reductions.
 * Search extensions:
     * Check extensions.
     * One reply extensions.
 * Quiescence search.
-* Evalution:
-    * PeSTO evaluation.
-    * Pawn structure.
-* Checkmate and draw detection.
 * Iterative deepening.
 * Aspiration windows.
 * Time control:
     * Fixed time per move: 1/30 of the remaining time.
+* Evalution:
+    * PeSTO evaluation (PST, materials, and tapered evaluation).
+    * Isolated, doubled and passed pawns bonus/penalty.
+    * Rook on open/half-open file bonus.
 * UCI.
 
 

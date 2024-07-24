@@ -112,6 +112,11 @@ export class UCI {
                     i++;
 
                     break;
+                
+                case "depth":
+                    this.engine.searchDepth = parseInt(args[i+1]);
+
+                    break;
             }
         }
 
