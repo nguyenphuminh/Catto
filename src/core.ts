@@ -1,8 +1,7 @@
 import { Chess, Move } from "chess.js";
 import { evaluateBoard } from "./evaluate";
-import { mvv_lva, PIECE_NUM } from "./evaluations";
+import { mvv_lva, PIECE_NUM, mgMaterial } from "./evaluations";
 import { genZobristKey } from "./zobrist";
-import { mgMaterial } from "./evaluations";
 
 export enum HashFlag {
     exact,
@@ -187,6 +186,12 @@ export class Engine {
         if (evaluation >= beta) {
             // Node fails high
             return beta;
+        }
+
+        // Delta pruning
+        const delta = mgMaterial[4];
+        if (evaluation < alpha - delta) {
+            return alpha;
         }
 
         // Found a better move
