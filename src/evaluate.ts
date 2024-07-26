@@ -48,7 +48,7 @@ export function evaluateBoard(chessObj: Chess) {
         }
     }
 
-    // Pawn structure eval
+    // Pawn structure and rooks eval
     let pawnDeficit = 0, rookScore = 0, us = pcolor(side), enemy = pcolor(side) ^ 1;
 
     for (let index = 0; index < 8; index++) {
@@ -167,6 +167,31 @@ export function evaluateBoard(chessObj: Chess) {
         pawnDeficit += isolatedPawnScore + passedPawnScore;
     }
 
+    // Mobility
+    // Our bishop mobility
+    let bishopMoves = chessObj.moves({ piece: "b" });
+    let bishopScore = bishopMoves.length * 5;
+
+    // Our queen mobility
+    let queenMoves = chessObj.moves({ piece: "q" });
+    mg[us] += queenMoves.length;
+    eg[us] += queenMoves.length * 2;
+
+    // Switch side
+    let tokens = chessObj.fen().split(" ");
+    tokens[1] = side === "w" ? "b" : "w";
+    tokens[3] = '-'; // reset the en passant square
+    const opChessObj = new Chess(tokens.join(" "));
+
+    // Their bishop mobility
+    let opBishopMoves = opChessObj.moves({ piece: "b" });
+    bishopScore -= opBishopMoves.length * 5;
+
+    // Their queen mobility
+    let opQueenMoves = opChessObj.moves({ piece: "q" });
+    mg[enemy] += opQueenMoves.length;
+    eg[enemy] += opQueenMoves.length * 2;
+
     // Tapered eval
     let mgScore = mg[us] - mg[enemy];
     let egScore = eg[us] - eg[enemy];
@@ -177,5 +202,5 @@ export function evaluateBoard(chessObj: Chess) {
     
     let egPhase = 24 - mgPhase;
     
-    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit + rookScore;
+    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit + rookScore + bishopScore;
 }
