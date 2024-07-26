@@ -74,6 +74,7 @@ Note that the config file is compiled with the engine itself, so if you are usin
 * Principle variation search.
 * Move ordering:
     * Hash move ordering.
+    * PV move ordering.
     * MVV-LVA heuristic.
     * Killer heuristic.
     * History heuristic.
