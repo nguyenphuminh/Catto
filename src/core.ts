@@ -18,13 +18,10 @@ export interface HashEntry {
 
 export interface EngineOptions {
     fen: string;
-    debug: boolean;
-    stable: boolean;
     searchDepth: number;
     lmrFullDepth: number;
     lmrMaxReduction: number;
     maxExtensions: number;
-    uci: boolean;
     version: string;
 }
 
@@ -68,7 +65,6 @@ export class Engine {
         this.fen = options.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         this.searchDepth = options.searchDepth || 64;
         this.chess = new Chess(this.fen);
-        this.uci = options.uci;
         this.lmrMaxReduction = options.lmrMaxReduction;
         this.lmrFullDepth = options.lmrFullDepth;
         this.maxExtensions = options.maxExtensions;
@@ -274,7 +270,7 @@ export class Engine {
             // Make null move
             let tokens = this.chess.fen().split(" ");
             tokens[1] = this.chess.turn() === "w" ? "b" : "w";
-            tokens[3] = '-' // reset the en passant square
+            tokens[3] = '-'; // reset the en passant square
             this.chess.load(tokens.join(" "));
 
             // Search with reduced depth

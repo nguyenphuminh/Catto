@@ -43,6 +43,11 @@ In your console, type:
 npm run build
 ```
 
+If you are using Bun:
+```
+npm run bun-build
+```
+
 ## Configure
 
 There are several configurations for Catto that you can change in `catto.config.js` if you want:
@@ -90,7 +95,13 @@ Note that the config file is compiled with the engine itself, so if you are usin
 * Evalution:
     * PeSTO evaluation (PST, materials, and tapered evaluation).
     * Isolated, doubled and passed pawns bonus/penalty.
-    * Rook on open/half-open file bonus.
+    * Mobility:
+        * Rook on open/half-open file bonus.
+        * Bishop legal moves.
+        * Queen legal moves.
+    * King safety:
+        * Penalty if king is on half-open file.
+        * Bonus if king has pieces nearby.
 * UCI.
 
 
