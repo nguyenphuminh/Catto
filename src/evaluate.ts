@@ -196,8 +196,6 @@ export function evaluateBoard(chessObj: Chess) {
 
         pawnDeficit += isolatedPawnScore + passedPawnScore;
     }
-    
-    console.log(kingScore);
 
     // Mobility
     // Our bishop mobility
