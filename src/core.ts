@@ -40,7 +40,6 @@ export class Engine {
     public maxExtensions: number;
     public ply: number = 0;
     public prevMove?: Move;
-    public bestMove?: Move;
     public uci: boolean = false;
 
     // Used for engine termination
@@ -59,7 +58,10 @@ export class Engine {
     }
 
     // PV table
-    public pvTable: string[];
+    public pvLength: number[];
+    public pvTable: string[][];
+    public collectPV = false;
+    public scorePV = false;
 
     constructor(options: EngineOptions) {
         this.fen = options.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -69,7 +71,28 @@ export class Engine {
         this.lmrFullDepth = options.lmrFullDepth;
         this.maxExtensions = options.maxExtensions;
 
-        this.pvTable = new Array(this.searchDepth).fill("");
+        // Init pv table
+        this.pvLength = new Array(this.searchDepth).fill(0);
+        this.pvTable = [];
+        for (let i = 0; i < this.searchDepth; i++) {
+            this.pvTable.push(new Array(this.searchDepth).fill(""));
+        }
+    }
+
+    // PV
+    enablePVScoring(moves: Move[]) {
+        // Disable following PV
+        this.collectPV = false;
+
+        for (const move of moves) {
+            // Make sure we hit PV move
+            if (this.pvTable[0][this.ply] == move.lan) {
+                // Enable move scoring
+                this.scorePV = true;
+                // Enable collecting PV
+                this.collectPV = true;
+            }
+        }
     }
 
     // Tranposition table
@@ -129,7 +152,19 @@ export class Engine {
         ) {
             priority += 100000;
         }
-    
+
+        // PV move
+        if (this.scorePV) {
+            // Make sure it is PV move
+            if (this.pvTable[0][this.ply] == move.lan)
+            {
+                // Disable PV scoring
+                this.scorePV = false;
+
+                priority += 50000;
+            }
+        }
+        
         // Non-capture moves
         if (!move.captured) {
             // 1st killer move
@@ -241,7 +276,9 @@ export class Engine {
 
     // The main negamax search algorithm
     negamax(depth: number, alpha: number, beta: number, extended: number): number {
+        // Init
         const inCheck = this.chess.inCheck();
+        this.pvLength[this.ply] = this.ply;
 
         this.nodes++;
 
@@ -292,7 +329,7 @@ export class Engine {
         let possibleMoves = this.chess.moves({ verbose: true });
 
         // Detecting checkmates and stalemates
-        if (possibleMoves.length === 0) {    
+        if (possibleMoves.length === 0) {
             if (inCheck) {
                 return -49000 + this.ply; // Checkmate
 
@@ -308,6 +345,10 @@ export class Engine {
         const extensions = extended < this.maxExtensions ? this.calculateExtensions(possibleMoves.length, inCheck) : 0;
 
         // Sort moves
+        if (this.collectPV)
+            // Enable PV move scoring
+            this.enablePVScoring(possibleMoves);
+
         possibleMoves = this.sortMoves(possibleMoves);
         let searchedMoves = 0, bestMoveSoFar: Move;
 
@@ -415,13 +456,16 @@ export class Engine {
 
                 alpha = score;
 
-                // Store best move if it's root
-                if (this.ply === 0) {
-                    this.bestMove = move;
-                }
-
                 // Store pv move
-                this.pvTable[this.ply] = move.lan;
+                this.pvTable[this.ply][this.ply] = move.lan;
+
+                // Loop over the next ply
+                for (let nextPly = this.ply + 1; nextPly < this.pvLength[this.ply + 1]; nextPly++)
+                    // Copy move from deeper ply into a current ply's line
+                    this.pvTable[this.ply][nextPly] = this.pvTable[this.ply + 1][nextPly];
+                
+                // adjust PV length
+                this.pvLength[this.ply] = this.pvLength[this.ply + 1];
             }
         }
 
@@ -443,6 +487,9 @@ export class Engine {
                 break;
             }
 
+            // Reset collect PV flag
+            this.collectPV = true;
+
             score = this.negamax(depth, alpha, beta, 0);
 
             if (score <= alpha || score >= beta) {
@@ -455,11 +502,13 @@ export class Engine {
             alpha = score - 50;
             beta = score + 50;
 
-            console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv ${this.pvTable.join(" ").trim()}`);
-
-            currentBestMove = this.bestMove;
+            if (this.pvLength[0]) {
+                console.log(
+                    `info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv ${this.pvTable[0].join(" ").trim()}`
+                );
+            }
         }
 
-        console.log(`bestmove ${currentBestMove?.lan}`);
+        console.log(`bestmove ${this.pvTable[0][0]}`);
     }
 }
