@@ -8,48 +8,75 @@ function pcolor(side: string) {
 export function evaluateBoard(chessObj: Chess) {
     const board = chessObj.board();
     const side = chessObj.turn();
+    const us = pcolor(side), enemy = pcolor(side) ^ 1;
 
-    const mg = [ 0, 0 ]
-        , eg = [ 0, 0 ]
-        , file = [ 
+    const mg = [ 0, 0 ] // Early-mid game score
+        , eg = [ 0, 0 ] // Endgame score
+        , file = [ // Pawns on files
             [ 0, 0, 0, 0, 0, 0, 0, 0 ],
             [ 0, 0, 0, 0, 0, 0, 0, 0 ]
         ]
-        , rooksOnFile = [
+        , rooksOnFile = [ // Rooks on files
+            new Array(8).fill(0),
+            new Array(8).fill(0)
+        ], kingsOnFile = [ // Kings on files
             new Array(8).fill(0),
             new Array(8).fill(0)
         ];
 
     let gamePhase = 0;
 
+    // King safety
+    let kingScore = 0;
+
     // Evaluate material and position and guessing current game phase
     for (let x = 0; x < board.length; x++) {
         for (let y = 0; y < board[x].length; y++) {
             if (board[x][y] === null) continue;
 
-            const color = pcolor(board[x][y]!.color);
+            const colorStr = board[x][y]!.color;
+            const color = pcolor(colorStr);
+            const pieceType = board[x][y]!.type;
 
             // Count material and square value
-            mg[color] += mgMaterial[PIECE_NUM[board[x][y]!.type]] + mgTable[board[x][y]!.color + board[x][y]!.type][x][y];
-            eg[color] += egMaterial[PIECE_NUM[board[x][y]!.type]] + egTable[board[x][y]!.color + board[x][y]!.type][x][y];
+            mg[color] += mgMaterial[PIECE_NUM[pieceType]] + mgTable[colorStr + pieceType][x][y];
+            eg[color] += egMaterial[PIECE_NUM[pieceType]] + egTable[colorStr + pieceType][x][y];
 
             // Guess game phase based on material
-            gamePhase += gamephaseInc[PIECE_NUM[board[x][y]!.type]];
+            gamePhase += gamephaseInc[PIECE_NUM[pieceType]];
 
             // Count pawns in a file
-            if (board[x][y]!.type === "p") {
+            if (pieceType === "p") {
                 file[color][y] += 1;
             }
 
             // Check if rook is in a file
-            if (board[x][y]!.type === "r") {
+            if (pieceType === "r") {
                 rooksOnFile[color][y] += 1;
+            }
+
+            // Check king shield
+            if (pieceType === "k") {
+                let shieldBonus = 0;
+
+                if (board[x] && board[x][y-1] && board[x][y-1]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x] && board[x][y+1] && board[x][y+1]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x-1] && board[x-1][y] && board[x-1][y]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x+1] && board[x+1][y] && board[x+1][y]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x-1] && board[x-1][y-1] && board[x-1][y-1]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x+1] && board[x+1][y+1] && board[x+1][y+1]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x-1] && board[x-1][y+1] && board[x-1][y+1]!.color === colorStr) { shieldBonus += 5; }
+                if (board[x+1] && board[x+1][y-1] && board[x+1][y-1]!.color === colorStr) { shieldBonus += 5; }
+
+                kingScore += color === us ? shieldBonus : -shieldBonus;
+
+                kingsOnFile[color][y] = 1;
             }
         }
     }
 
     // Pawn structure and rooks eval
-    let pawnDeficit = 0, rookScore = 0, us = pcolor(side), enemy = pcolor(side) ^ 1;
+    let pawnDeficit = 0, rookScore = 0;
 
     for (let index = 0; index < 8; index++) {
         // Doubled pawns eval
@@ -57,6 +84,9 @@ export function evaluateBoard(chessObj: Chess) {
 
         // Rooks on open/half open file:
         rookScore += (file[us][index] === 0 ? 20 * rooksOnFile[us][index] : 0) - (file[enemy][index] === 0 ? 20 * rooksOnFile[enemy][index] : 0);
+
+        // King on open/half open file:
+        kingScore -= (file[us][index] === 0 ? 20 * kingsOnFile[us][index] : 0) - (file[enemy][index] === 0 ? 20 * kingsOnFile[enemy][index] : 0);
 
         // Isolated/passed pawns eval
         let isolatedPawnScore = 0, passedPawnScore = 0;
@@ -166,6 +196,8 @@ export function evaluateBoard(chessObj: Chess) {
 
         pawnDeficit += isolatedPawnScore + passedPawnScore;
     }
+    
+    console.log(kingScore);
 
     // Mobility
     // Our bishop mobility
@@ -202,5 +234,5 @@ export function evaluateBoard(chessObj: Chess) {
     
     let egPhase = 24 - mgPhase;
     
-    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit + rookScore + bishopScore;
+    return (mgScore * mgPhase + egScore * egPhase) / 24 + pawnDeficit + rookScore + bishopScore + kingScore;
 }

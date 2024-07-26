@@ -99,6 +99,9 @@ Note that the config file is compiled with the engine itself, so if you are usin
         * Rook on open/half-open file bonus.
         * Bishop legal moves.
         * Queen legal moves.
+    * King safety:
+        * Penalty if king is on half-open file.
+        * Bonus if king has pieces nearby.
 * UCI.
 
 
