@@ -9,6 +9,12 @@
     <a href="https://github.com/nguyenphuminh/Catto/stargazers"><img src="https://img.shields.io/github/stars/nguyenphuminh/Catto?color=gold"></a>
 </div>
 
+## Play Catto
+
+If you just want to play or use Catto, you can download the engine [in the releases page](https://github.com/nguyenphuminh/Catto/releases) and import it into a chess GUI (e.g. Arena, Cute Chess or Lucas Chess).
+
+If you want to use Catto for development, follow the steps below.
+
 
 ## Dependencies 
 
