@@ -503,9 +503,13 @@ export class Engine {
             beta = score + 50;
 
             if (this.pvLength[0]) {
-                console.log(
-                    `info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv ${this.pvTable[0].join(" ").trim()}`
-                );
+                let pv = "";
+
+                for (let i = 0; i < this.pvLength[0]; i++) {
+                    pv += ` ${this.pvTable[0][i]}`;
+                }
+
+                console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
             }
         }
 
