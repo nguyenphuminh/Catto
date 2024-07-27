@@ -103,6 +103,9 @@ export class Engine {
 
         const hash = genZobristKey(this.chess).toString();
         // const hash = this.chess.fen();
+
+        if (score < -48000) score -= this.ply;
+        if (score > 48000) score += this.ply;
         
         this.hashTable[hash] = {
             score,
@@ -299,6 +302,14 @@ export class Engine {
         // Quiescence search
         if (depth === 0) return this.quiescence(alpha, beta);
 
+        // Reverse futility pruning
+        const currentEval = evaluateBoard(this.chess);
+        if (depth < 3 && !inCheck && !(beta - alpha > 1) && Math.abs(beta - 1) > -48900) {
+            let rfpMargin = mgMaterial[0] * depth; // Scaled for each depth by a pawn
+
+            if (currentEval - rfpMargin >= beta) return currentEval - rfpMargin;
+        }
+
         // Null move pruning
         if (this.ply && depth >= 3 && !inCheck) {
             // Preserve old moves to reconstruct chess obj
@@ -355,7 +366,6 @@ export class Engine {
         // Futility pruning
         let fpEnabled = false;
         if (depth < 4 && Math.abs(alpha) < 48000) {
-            const currentEval = evaluateBoard(this.chess);
             // Margin for each depth, the shallower the depth the more we reduce the margin
             const futilityMargin = [ 0, mgMaterial[0], mgMaterial[1], mgMaterial[3] ];
             fpEnabled = currentEval + futilityMargin[depth] <= alpha;
@@ -464,7 +474,7 @@ export class Engine {
                     // Copy move from deeper ply into a current ply's line
                     this.pvTable[this.ply][nextPly] = this.pvTable[this.ply + 1][nextPly];
                 
-                // adjust PV length
+                // Adjust PV length
                 this.pvLength[this.ply] = this.pvLength[this.ply + 1];
             }
         }

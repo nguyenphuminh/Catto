@@ -89,6 +89,7 @@ Note that the config file is compiled with the engine itself, so if you are usin
 * Pruning:
     * Null-move pruning.
     * Futility pruning.
+    * Reverse futility pruning.
     * Delta pruning.
 * Late move reductions.
 * Search extensions:
