@@ -303,8 +303,9 @@ export class Engine {
         if (depth === 0) return this.quiescence(alpha, beta);
 
         // Reverse futility pruning
+        const isPv = beta - alpha > 1;
         const currentEval = evaluateBoard(this.chess);
-        if (depth < 3 && !inCheck && !(beta - alpha > 1) && Math.abs(beta - 1) > -48900) {
+        if (depth < 3 && !inCheck && !isPv && Math.abs(beta - 1) > -48900) {
             let rfpMargin = mgMaterial[0] * depth; // Scaled for each depth by a pawn
 
             if (currentEval - rfpMargin >= beta) return currentEval - rfpMargin;
@@ -362,6 +363,23 @@ export class Engine {
 
         possibleMoves = this.sortMoves(possibleMoves);
         let searchedMoves = 0, bestMoveSoFar: Move;
+
+        // Razoring, skipping an entire subtree
+        if (!isPv && !inCheck && depth <= 3) {
+            // Prepare score for first phase
+            let scaledScore = currentEval + mgMaterial[0];
+
+            if (scaledScore < beta) {
+                const qScore = this.quiescence(alpha, beta);
+
+                if (depth === 1) return Math.max(qScore, scaledScore);
+                
+                // Second phase for depth 2 and depth 3
+                scaledScore += mgMaterial[0];
+
+                if (scaledScore < beta && qScore < beta) return Math.max(qScore, scaledScore);
+            }
+        }
 
         // Futility pruning
         let fpEnabled = false;

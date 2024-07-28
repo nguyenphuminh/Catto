@@ -87,9 +87,10 @@ Note that the config file is compiled with the engine itself, so if you are usin
     * Countermove heuristic.
 * Transposition table.
 * Pruning:
-    * Null-move pruning.
-    * Futility pruning.
     * Reverse futility pruning.
+    * Null-move pruning.
+    * Razoring.
+    * Futility pruning.
     * Delta pruning.
 * Late move reductions.
 * Search extensions:
