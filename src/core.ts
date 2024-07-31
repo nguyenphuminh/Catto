@@ -98,10 +98,8 @@ export class Engine {
     // Tranposition table
     public hashTable: Record<string, HashEntry> = {};
 
-    recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move) {
-        // if (this.stable) return;
-
-        const hash = genZobristKey(this.chess).toString();
+    recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move, customHash?: string) {
+        const hash = customHash || genZobristKey(this.chess).toString();
         // const hash = this.chess.fen();
 
         if (score < -48000) score -= this.ply;
@@ -115,8 +113,8 @@ export class Engine {
         }
     }
 
-    probeHash(alpha: number, beta: number, depth: number): number {
-        const hash = genZobristKey(this.chess).toString();
+    probeHash(alpha: number, beta: number, depth: number, customHash?: string): number {
+        const hash = customHash || genZobristKey(this.chess).toString();
         // const hash = this.chess.fen();
 
         const hashEntry = this.hashTable[hash];
@@ -200,8 +198,8 @@ export class Engine {
         return priority;
     }
 
-    sortMoves(moves: Move[]) {
-        const currentBoardHash = genZobristKey(this.chess).toString();
+    sortMoves(moves: Move[], customHash?: string) {
+        const currentBoardHash = customHash || genZobristKey(this.chess).toString();
 
         return moves
             .map(move => ({ move, priority: this.getMovePrio(move, currentBoardHash) }))
@@ -211,7 +209,7 @@ export class Engine {
 
     // Quiescence search
     quiescence(alpha: number, beta: number): number {
-        // increment nodes count
+        // Increment nodes count
         this.nodes++;
 
         const evaluation = evaluateBoard(this.chess);
@@ -282,6 +280,8 @@ export class Engine {
         // Init
         const inCheck = this.chess.inCheck();
         this.pvLength[this.ply] = this.ply;
+        // Hash onced to prevent duplications
+        const currentHash = genZobristKey(this.chess).toString();
 
         this.nodes++;
 
@@ -289,12 +289,12 @@ export class Engine {
 
         // Detecting 3-fold repetition
         if (this.ply && this.chess.isThreefoldRepetition()) {
-            this.recordHash(0, depth, HashFlag.exact, this.prevMove!);
+            this.recordHash(0, depth, HashFlag.exact, this.prevMove!, currentHash);
             return 0;
         }
 
         // Check if position exists in transposition table
-        let score = this.probeHash(alpha, beta, depth);
+        let score = this.probeHash(alpha, beta, depth, currentHash);
 
         if (this.ply && score !== 99999)
             return score;
@@ -361,7 +361,7 @@ export class Engine {
             // Enable PV move scoring
             this.enablePVScoring(possibleMoves);
 
-        possibleMoves = this.sortMoves(possibleMoves);
+        possibleMoves = this.sortMoves(possibleMoves, currentHash);
         let searchedMoves = 0, bestMoveSoFar: Move;
 
         // Razoring, skipping an entire subtree
@@ -455,7 +455,7 @@ export class Engine {
             // Fail-hard beta cutoff
             if (score >= beta) {
                 // Store move in the case of a fail-hard beta cutoff
-                this.recordHash(beta, depth, HashFlag.beta, move);
+                this.recordHash(beta, depth, HashFlag.beta, move, currentHash);
 
                 if (!move.captured) { // Only quiet moves
                     // Store killer moves
@@ -497,7 +497,7 @@ export class Engine {
             }
         }
 
-        this.recordHash(alpha, depth, hashFlag, bestMoveSoFar!);
+        this.recordHash(alpha, depth, hashFlag, bestMoveSoFar!, currentHash);
 
         // Node fails low
         return alpha;
