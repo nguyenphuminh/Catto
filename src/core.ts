@@ -3,6 +3,10 @@ import { evaluateBoard } from "./evaluate";
 import { mvv_lva, PIECE_NUM, mgMaterial } from "./evaluations";
 import { genZobristKey } from "./zobrist";
 
+const MATE_SCORE = 48000;
+const MATE_VALUE = 49000;
+const INFINITY = 50000;
+
 export enum HashFlag {
     exact,
     alpha,
@@ -102,8 +106,8 @@ export class Engine {
         const hash = customHash || genZobristKey(this.chess).toString();
         // const hash = this.chess.fen();
 
-        if (score < -48000) score -= this.ply;
-        if (score > 48000) score += this.ply;
+        if (score < -MATE_SCORE) score -= this.ply;
+        if (score > MATE_SCORE) score += this.ply;
         
         this.hashTable[hash] = {
             score,
@@ -126,8 +130,8 @@ export class Engine {
         if (depth <= hashEntry.depth) {
             let score = hashEntry.score;
 
-            if (score < -48000) score += this.ply;
-            if (score > 48000) score -= this.ply;
+            if (score < -MATE_SCORE) score += this.ply;
+            if (score > MATE_SCORE) score -= this.ply;
 
             if (hashEntry.hashFlag === HashFlag.exact)
                 return score;
@@ -343,7 +347,7 @@ export class Engine {
         // Detecting checkmates and stalemates
         if (possibleMoves.length === 0) {
             if (inCheck) {
-                return -49000 + this.ply; // Checkmate
+                return -MATE_VALUE + this.ply; // Checkmate
 
                 // Ply is added because:
                 // - In our checkmate, we would want the furthest path to checkmate
@@ -383,7 +387,7 @@ export class Engine {
 
         // Futility pruning
         let fpEnabled = false;
-        if (depth < 4 && Math.abs(alpha) < 48000) {
+        if (depth < 4 && Math.abs(alpha) < MATE_SCORE) {
             // Margin for each depth, the shallower the depth the more we reduce the margin
             const futilityMargin = [ 0, mgMaterial[0], mgMaterial[1], mgMaterial[3] ];
             fpEnabled = currentEval + futilityMargin[depth] <= alpha;
@@ -507,10 +511,10 @@ export class Engine {
         // Iterative deepening with aspiration windows
         this.startTime = Date.now();
 
-        let alpha = -50000, beta = 50000, score = 0, currentBestMove = null;
+        let alpha = -INFINITY, beta = INFINITY, score = 0;
 
         for (let depth = 1; depth <= this.searchDepth; depth++) {
-            // Stop searching if forced to stop
+            // Stop searching if forced to stop or timeout
             if (this.stopped || Date.now() - this.startTime > this.timeout) {
                 break;
             }
@@ -520,9 +524,10 @@ export class Engine {
 
             score = this.negamax(depth, alpha, beta, 0);
 
+            // Fell out of window
             if (score <= alpha || score >= beta) {
-                alpha = -50000;    
-                beta = 50000;
+                alpha = -INFINITY;    
+                beta = INFINITY;
                 depth--;
                 continue;
             }
@@ -537,7 +542,13 @@ export class Engine {
                     pv += ` ${this.pvTable[0][i]}`;
                 }
 
-                console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
+                if (score >= -MATE_VALUE && score <= -MATE_SCORE) {
+                    console.log(`info depth ${depth} score mate ${Math.round(-(score + MATE_VALUE) / 2)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
+                } else if (score >= MATE_SCORE && score <= MATE_VALUE) {
+                    console.log(`info depth ${depth} score mate ${Math.round((MATE_VALUE - score) / 2)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
+                } else {
+                    console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
+                }
             }
         }
 
