@@ -508,6 +508,8 @@ export class Engine {
     }
 
     findMove() {
+        let bestMove = "";
+
         // Iterative deepening with aspiration windows
         this.startTime = Date.now();
 
@@ -550,8 +552,12 @@ export class Engine {
                     console.log(`info depth ${depth} score cp ${Math.round(score)} time ${Date.now() - this.startTime} nodes ${this.nodes} pv${pv}`);
                 }
             }
+
+            // This is used to prevent cases where moves at a depth is not completely searched.
+            // We will just use the best move of previous depth if time is up or forced-stopped.
+            bestMove = this.pvTable[0][0];
         }
 
-        console.log(`bestmove ${this.pvTable[0][0]}`);
+        console.log(`bestmove ${bestMove}`);
     }
 }
