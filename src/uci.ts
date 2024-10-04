@@ -47,7 +47,7 @@ export class UCI {
                     }
                     
                     if (command.startsWith("go")) {
-                        this.handleGo(command);
+                        setImmediate(() => this.handleGo(command));
                     }
             }
         })

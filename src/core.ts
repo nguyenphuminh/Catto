@@ -508,23 +508,22 @@ export class Engine {
     }
 
     findMove() {
-        let bestMove = "";
-
         // Iterative deepening with aspiration windows
         this.startTime = Date.now();
 
-        let alpha = -INFINITY, beta = INFINITY, score = 0;
+        let alpha = -INFINITY, beta = INFINITY, score = 0, bestMove = "";
 
         for (let depth = 1; depth <= this.searchDepth; depth++) {
-            // Stop searching if forced to stop or timeout
-            if (this.stopped || Date.now() - this.startTime > this.timeout) {
-                break;
-            }
-
             // Reset collect PV flag
             this.collectPV = true;
 
+            // Find moves
             score = this.negamax(depth, alpha, beta, 0);
+
+            // Handle timeouts
+            if (this.stopped || Date.now() - this.startTime > this.timeout) {
+                break;
+            }
 
             // Fell out of window
             if (score <= alpha || score >= beta) {
