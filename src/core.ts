@@ -100,28 +100,28 @@ export class Engine {
     }
 
     // Tranposition table
-    public hashTable: Record<string, HashEntry> = {};
+    public hashTable: Map<bigint, HashEntry> = new Map();
 
-    recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move, customHash?: string) {
-        const hash = customHash || genZobristKey(this.chess).toString();
+    recordHash(score: number, depth: number, hashFlag: HashFlag, move: Move, customHash?: bigint) {
+        const hash = customHash || genZobristKey(this.chess);
         // const hash = this.chess.fen();
 
         if (score < -MATE_SCORE) score -= this.ply;
         if (score > MATE_SCORE) score += this.ply;
         
-        this.hashTable[hash] = {
+        this.hashTable.set(hash, {
             score,
             depth,
             hashFlag,
             move
-        }
+        }); 
     }
 
-    probeHash(alpha: number, beta: number, depth: number, customHash?: string): number {
-        const hash = customHash || genZobristKey(this.chess).toString();
+    probeHash(alpha: number, beta: number, depth: number, customHash?: bigint): number {
+        const hash = customHash || genZobristKey(this.chess);
         // const hash = this.chess.fen();
 
-        const hashEntry = this.hashTable[hash];
+        const hashEntry = this.hashTable.get(hash);
 
         if (!hashEntry)
             // If position does not exist the transposition table
@@ -145,15 +145,16 @@ export class Engine {
     }
 
     // Move ordering
-    getMovePrio(move: Move, currentBoardHash: string): number {
+    getMovePrio(move: Move, currentBoardHash: bigint): number {
         let priority = 0;
 
         // Hash Move
-        // const currentBoardHash = this.chess.fen();
+        const hashEntry = this.hashTable.get(currentBoardHash);
+
         if (
-            this.hashTable[currentBoardHash] && 
-            this.hashTable[currentBoardHash].move &&
-            move.san === this.hashTable[currentBoardHash].move.san
+            hashEntry && 
+            hashEntry.move &&
+            move.san === hashEntry.move.san
         ) {
             priority += 100000;
         }
@@ -202,8 +203,8 @@ export class Engine {
         return priority;
     }
 
-    sortMoves(moves: Move[], customHash?: string) {
-        const currentBoardHash = customHash || genZobristKey(this.chess).toString();
+    sortMoves(moves: Move[], customHash?: bigint) {
+        const currentBoardHash = customHash || genZobristKey(this.chess);
 
         return moves
             .map(move => ({ move, priority: this.getMovePrio(move, currentBoardHash) }))
@@ -285,7 +286,7 @@ export class Engine {
         const inCheck = this.chess.inCheck();
         this.pvLength[this.ply] = this.ply;
         // Hash onced to prevent duplications
-        const currentHash = genZobristKey(this.chess).toString();
+        const currentHash = genZobristKey(this.chess);
 
         this.nodes++;
 
