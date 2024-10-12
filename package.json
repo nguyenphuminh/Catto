@@ -1,6 +1,6 @@
 {
   "name": "catto",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "description": "The Catto chess engine",
   "main": "index.js",
   "scripts": {

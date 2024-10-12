@@ -29,11 +29,6 @@ export interface EngineOptions {
     version: string;
 }
 
-export interface HistoryMove {
-    "b": Record<string, number>[],
-    "w": Record<string, number>[]
-}
-
 export class Engine {
     public chess: Chess;
     public fen: string;
@@ -54,13 +49,9 @@ export class Engine {
     // Used for killer move heuristic
     public killerMove = [ new Array(64).fill(null), new Array(64).fill(null) ];
     // Used for counter move heuristic
-    public counterMove: Record<string, Move> = {};
+    public counterMove: Map<string, Move> = new Map();
     // Used for history move heuristic
-    public historyMove: HistoryMove = {
-        "b": [ {}, {}, {}, {}, {}, {} ],
-        "w": [ {}, {}, {}, {}, {}, {} ]
-    }
-
+    public historyMove: Map<string, number> = new Map();
     // PV table
     public pvLength: number[];
     public pvTable: string[][];
@@ -174,22 +165,32 @@ export class Engine {
         // Non-capture moves
         if (!move.captured) {
             // 1st killer move
-            if (this.killerMove[0][this.ply] && this.killerMove[0][this.ply].san === move.san) { 
+            const firstKiller = this.killerMove[0][this.ply];
+
+            if (firstKiller && firstKiller.san === move.san) { 
                 priority += 9000; 
             }
     
             // 2nd killer move
-            else if (this.killerMove[1][this.ply] && this.killerMove[1][this.ply].san === move.san) {
-                priority += 8000;
+            else {
+                const secondKiller = this.killerMove[1][this.ply];
+
+                if (secondKiller && secondKiller.san === move.san) {
+                    priority += 8000;
+                }
             }
     
             // Counter move
-            if (this.prevMove && this.counterMove[this.prevMove.san] && this.counterMove[this.prevMove.san].san === move.san) {
-                priority += 9000;
+            if (this.prevMove) {
+                const counter = this.counterMove.get(this.prevMove.san);
+
+                if (counter && counter.san === move.san) {
+                    priority += 7000;
+                }
             }
     
             // History move
-            priority += this.historyMove[move.color][PIECE_NUM[move.piece]][move.to] || 0;
+            priority += this.historyMove.get(`${move.color} ${move.piece} ${move.to}`) || 0;
             
             return priority;
         }
@@ -469,7 +470,7 @@ export class Engine {
                     this.killerMove[0][this.ply] = move;
     
                     // Store counter moves
-                    this.counterMove[this.prevMove.san] = move;
+                    this.counterMove.set(this.prevMove.san, move);
                 }
 
                 // Node fails high
@@ -484,7 +485,9 @@ export class Engine {
 
                 // Store history moves
                 if (!move.captured) { // Only quiet moves
-                    this.historyMove[move.color][PIECE_NUM[move.piece]][move.to] += depth;
+                    const historyMoveKey = `${move.color} ${move.piece} ${move.to}`;
+                    const historyMoveScore = this.historyMove.get(historyMoveKey) || 0;
+                    this.historyMove.set(historyMoveKey, historyMoveScore + depth);
                 }
 
                 alpha = score;
@@ -528,7 +531,7 @@ export class Engine {
 
             // Fell out of window
             if (score <= alpha || score >= beta) {
-                alpha = -INFINITY;    
+                alpha = -INFINITY;
                 beta = INFINITY;
                 depth--;
                 continue;
