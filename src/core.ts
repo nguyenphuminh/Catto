@@ -293,8 +293,8 @@ export class Engine {
 
         let hashFlag = HashFlag.alpha;
 
-        // Detecting 3-fold repetition
-        if (this.ply && this.chess.isThreefoldRepetition()) {
+        // Detecting 3-fold repetition, 50-move rule draw and insufficient material
+        if (this.ply && (this.chess.isThreefoldRepetition() || this.chess.isDraw())) {
             this.recordHash(0, depth, HashFlag.exact, this.prevMove!, currentHash);
             return 0;
         }

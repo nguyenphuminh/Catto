@@ -1,6 +1,6 @@
 module.exports = {
     // Current version to show in UCI
-    version: "v0.12.5",
+    version: "v0.12.6",
     // Late move reduction config
     lmrFullDepth: 4, // Number of moves to be searched in full depth
     lmrMaxReduction: 3, // Only apply LMR above this depth
