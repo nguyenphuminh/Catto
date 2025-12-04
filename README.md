@@ -4,7 +4,7 @@
     <br/>
     <div><b>The Catto Chess Engine</b></div>
     <br/>
-    <a href="https://github.com/nguyenphuminh/Catto/blob/master/LICENSE.md"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg"/></a>
+    <a href="https://github.com/nguyenphuminh/Catto/blob/master/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg"/></a>
     <a href="https://github.com/nguyenphuminh/Catto/releases"><img src="https://img.shields.io/github/package-json/v/nguyenphuminh/Catto?label=stable"></a>
     <a href="https://github.com/nguyenphuminh/Catto/stargazers"><img src="https://img.shields.io/github/stars/nguyenphuminh/Catto?color=gold"></a>
 </div>
@@ -123,4 +123,4 @@ See todos for Catto [here](https://github.com/users/nguyenphuminh/projects/2).
 
 Copyrights © 2024 Nguyen Phu Minh.
 
-This project is licensed under the GPL-3.0 License.
+This project is licensed under the Apache-2.0 License.
